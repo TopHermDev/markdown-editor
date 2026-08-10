@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Editor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Toolbar -->
+    <div id="toolbar">
+      <div id="toolbar-left">
+        <button id="btn-open" title="Open file (Ctrl+O)" onclick="openFile()">Open</button>
+        <button id="btn-save" title="Save (Ctrl+S)" onclick="saveFile()">Save</button>
+        <span id="filename">No file open</span>
+      </div>
+      <div id="toolbar-right">
+        <span id="mode-indicator">EDIT</span>
+        <button id="btn-preview" onclick="toggleMode()" title="Toggle preview (E / Esc)">
+          Preview
+        </button>
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div id="editor-container">
+      <div id="editor-pane">
+        <textarea id="editor" spellcheck="false" placeholder="Type markdown here..."></textarea>
+      </div>
+      <div id="preview-pane" class="hidden">
+        <div id="preview" class="markdown-body"></div>
+      </div>
+    </div>
+
+    <!-- Status bar -->
+    <div id="statusbar">
+      <span id="status-text">Ready</span>
+      <span id="cursor-pos">Ln 1, Col 1</span>
+    </div>
+  </div>
+
+  <!-- File input (hidden) -->
+  <input type="file" id="file-input" accept=".md,.markdown,.txt,.rst" style="display:none">
+
+  <!-- Libs -->
+  <script src="lib/marked.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

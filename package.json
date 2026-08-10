@@ -1,0 +1,10 @@
+{
+  "name": "markdown-editor",
+  "version": "0.1.0",
+  "description": "Lightweight markdown reader and editor",
+  "scripts": {
+    "dev": "echo 'No dev server needed'",
+    "build": "echo 'Built-in assets'"
+  },
+  "license": "MIT"
+}
