@@ -23,10 +23,15 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "icon": [],
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.ico"
+    ],
     "linux": {
       "deb": {
-        "depends": ["libwebkit2gtk-4.1-dev"]
+        "depends": [
+          "libwebkit2gtk-4.1-dev"
+        ]
       }
     }
   }
