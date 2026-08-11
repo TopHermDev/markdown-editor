@@ -1,15 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-cli/schema.json",
-  "productName": "Markdown Editor",
+  "productName": "MarkFlow",
   "version": "0.1.0",
-  "identifier": "com.local.markdown-editor",
+  "identifier": "com.local.markflow",
   "build": {
     "frontendDist": "../src"
   },
   "app": {
     "windows": [
       {
-        "title": "Markdown Editor",
+        "title": "MarkFlow",
         "width": 1100,
         "height": 750,
         "minWidth": 600,

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Markdown Editor</title>
+  <title>MarkFlow</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -11,14 +11,17 @@
     <!-- Toolbar -->
     <div id="toolbar">
       <div id="toolbar-left">
-        <button id="btn-open" title="Open file (Ctrl+O)" onclick="openFile()">Open</button>
-        <button id="btn-save" title="Save (Ctrl+S)" onclick="saveFile()">Save</button>
+        <button id="btn-open" title="Open file (Ctrl+O)">Open</button>
+        <button id="btn-save" title="Save (Ctrl+S)">Save</button>
         <span id="filename">No file open</span>
       </div>
       <div id="toolbar-right">
         <span id="mode-indicator">EDIT</span>
-        <button id="btn-preview" onclick="toggleMode()" title="Toggle preview (E / Esc)">
+        <button id="btn-preview" title="Toggle preview (E / Esc)">
           Preview
+        </button>
+        <button id="btn-theme" title="Toggle dark/light mode">
+          <span id="theme-icon">☀️</span>
         </button>
       </div>
     </div>

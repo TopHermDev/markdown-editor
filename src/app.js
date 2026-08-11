@@ -1,8 +1,10 @@
-// ── Markdown Editor ──
+// ── MarkFlow ──
 // Lightweight markdown reader/editor with GFM support
 
 let currentFilePath = null;
 let isPreviewMode = false;
+let isDarkMode = true;
+
 const editor = document.getElementById('editor');
 const preview = document.getElementById('preview');
 const editorPane = document.getElementById('editor-pane');
@@ -12,6 +14,7 @@ const filenameDisplay = document.getElementById('filename');
 const statusText = document.getElementById('status-text');
 const cursorPos = document.getElementById('cursor-pos');
 const fileInput = document.getElementById('file-input');
+const themeIcon = document.getElementById('theme-icon');
 
 // Configure marked for GFM
 marked.setOptions({
@@ -21,6 +24,29 @@ marked.setOptions({
   smartLists: true,
   smartypants: false
 });
+
+// ── Theme Toggle ──
+function applyTheme(dark) {
+  isDarkMode = dark;
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  themeIcon.textContent = dark ? '☀️' : '🌙';
+  localStorage.setItem('markflow-theme', dark ? 'dark' : 'light');
+}
+
+function toggleTheme() {
+  applyTheme(!isDarkMode);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('markflow-theme');
+  if (saved === 'dark' || saved === 'light') {
+    applyTheme(saved === 'dark');
+  } else {
+    // Respect system preference on first launch
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(prefersDark);
+  }
+}
 
 // ── Mode Toggle ──
 function toggleMode() {
@@ -43,6 +69,12 @@ function updateMode() {
     modeIndicator.classList.remove('preview');
   }
 }
+
+// ── Toolbar Button Event Listeners (Issue #1 fix) ──
+document.getElementById('btn-open').addEventListener('click', openFile);
+document.getElementById('btn-save').addEventListener('click', saveFile);
+document.getElementById('btn-preview').addEventListener('click', toggleMode);
+document.getElementById('btn-theme').addEventListener('click', toggleTheme);
 
 // ── Keyboard Shortcuts ──
 document.addEventListener('keydown', (e) => {
@@ -161,5 +193,6 @@ editor.addEventListener('keydown', (e) => {
 });
 
 // ── Init ──
+initTheme();
 updateMode();
 statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+O to open';
