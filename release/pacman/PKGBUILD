@@ -1,0 +1,34 @@
+# Maintainer: TopHermDev <noreply@github.com>
+pkgname=markdown-editor
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Lightweight markdown reader and editor built with Tauri'
+arch=('x86_64')
+url="https://github.com/TopHermDev/markdown-editor"
+license=('MIT')
+depends=('webkit2gtk' 'gtk3' 'libsoup3')
+makedepends=('cargo')
+options=('!lto')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/TopHermDev/markdown-editor/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd "$pkgname-$pkgver/src-tauri"
+  cargo build --release
+}
+
+package() {
+  cd "$pkgname-$pkgver/src-tauri"
+  install -Dm755 target/release/markdown-editor "$pkgdir/usr/bin/markdown-editor"
+  install -Dm644 ../src-tauri/icons/256x256.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/markdown-editor.png"
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/markdown-editor.desktop" << DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Markdown Editor
+Exec=/usr/bin/markdown-editor
+Icon=markdown-editor
+Categories=TextEditor;Utility;
+Comment=Lightweight markdown reader and editor
+Terminal=false
+DESKTOP
+}

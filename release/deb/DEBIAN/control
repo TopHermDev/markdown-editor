@@ -1,0 +1,12 @@
+Package: markflow
+Version: 0.2.0
+Section: editors
+Priority: optional
+Architecture: amd64
+Depends: libwebkit2gtk-4.1-0, libgtk-3-0
+Maintainer: TopHermDev <noreply@github.com>
+Description: Lightweight markdown reader and editor
+ A fast, minimal markdown editor built with Tauri 2.
+ Supports GitHub Flavored Markdown, dark/light theme,
+ and keyboard shortcuts for preview/editing.
+Homepage: https://github.com/TopHermDev/markdown-editor

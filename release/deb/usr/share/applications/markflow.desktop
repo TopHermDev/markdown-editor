@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=MarkFlow
+Exec=/usr/bin/markflow
+Icon=markflow
+Categories=TextEditor;Utility;
+MimeType=text/markdown;text/x-markdown;
+Comment=Lightweight markdown reader and editor
+Terminal=false
+StartupNotify=true

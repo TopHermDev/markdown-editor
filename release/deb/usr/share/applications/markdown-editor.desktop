@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Markdown Editor
+Exec=/usr/bin/markdown-editor
+Icon=markdown-editor
+Categories=TextEditor;Utility;
+MimeType=text/markdown;text/x-markdown;
+Comment=Lightweight markdown reader and editor
+Terminal=false
+StartupNotify=true
