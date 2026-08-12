@@ -13,6 +13,8 @@
       <div id="toolbar-left">
         <button id="btn-open" title="Open file (Ctrl+O)">Open</button>
         <button id="btn-save" title="Save (Ctrl+S)">Save</button>
+        <button id="btn-export-pdf" title="Export as PDF">PDF</button>
+        <button id="btn-export-word" title="Export as Word">Word</button>
         <span id="filename">No file open</span>
       </div>
       <div id="toolbar-right">
@@ -48,6 +50,9 @@
 
   <!-- Libs -->
   <script src="lib/marked.min.js"></script>
+  <script src="lib/html2pdf.bundle.min.js"></script>
+  <script src="lib/docx.min.js"></script>
+  <script src="lib/FileSaver.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
