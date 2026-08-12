@@ -1,19 +1,25 @@
 #!/bin/bash
 set -e
 BINARY="/usr/local/bin/markflow"
-ICON="/usr/share/icons/hicolor/256x256/apps/markflow.png"
 DESKTOP="/usr/local/share/applications/markflow.desktop"
+
 echo "Installing MarkFlow..."
+
+# Install binary
 install -Dm755 markflow "$BINARY"
-install -Dm644 icons/256x256.png "$ICON"
+
+# Create desktop entry (no external icon needed — uses text icon)
 cat > "$DESKTOP" << EOF
 [Desktop Entry]
 Type=Application
 Name=MarkFlow
 Exec=$BINARY
-Icon=markflow
 Categories=TextEditor;Utility;
+MimeType=text/markdown;text/x-markdown;
+Comment=Lightweight markdown reader and editor
 Terminal=false
 StartupNotify=true
 EOF
-echo "Installed to $BINARY — run: markflow"
+
+echo "Installed to $BINARY"
+echo "Run with: markflow"
