@@ -5,6 +5,12 @@ let currentFilePath = null;
 let isPreviewMode = false;
 let isDarkMode = true;
 
+// ── Autosave State ──
+let autosaveEnabled = localStorage.getItem('markflow-autosave-enabled') !== 'false';
+let autosaveTimer = null;
+const AUTOSAVE_DELAY = 5000; // 5 seconds after last edit
+const AUTOSAVE_KEY = 'markflow-autosave-session';
+
 const editor = document.getElementById('editor');
 const preview = document.getElementById('preview');
 const editorPane = document.getElementById('editor-pane');
@@ -12,9 +18,11 @@ const previewPane = document.getElementById('preview-pane');
 const modeIndicator = document.getElementById('mode-indicator');
 const filenameDisplay = document.getElementById('filename');
 const statusText = document.getElementById('status-text');
+const autosaveStatus = document.getElementById('autosave-status');
 const cursorPos = document.getElementById('cursor-pos');
 const fileInput = document.getElementById('file-input');
 const themeIcon = document.getElementById('theme-icon');
+const autosaveCheckbox = document.getElementById('autosave-checkbox');
 
 // Configure marked for GFM
 marked.setOptions({
@@ -110,6 +118,13 @@ document.addEventListener('keydown', (e) => {
     saveFile();
     return;
   }
+
+  // Ctrl+Shift+S: Force autosave to localStorage
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 's') {
+    e.preventDefault();
+    forceAutosave();
+    return;
+  }
 });
 
 // ── File Operations ──
@@ -128,6 +143,7 @@ fileInput.addEventListener('change', async (e) => {
     filenameDisplay.textContent = file.name;
     statusText.textContent = `Opened: ${file.name}`;
     updateMode();
+    scheduleAutosave();
   };
   reader.readAsText(file);
   fileInput.value = '';
@@ -142,6 +158,108 @@ function saveFile() {
   URL.revokeObjectURL(a.href);
   statusText.textContent = `Saved: ${currentFilePath || 'untitled.md'}`;
 }
+
+// ── Autosave System ──
+function debounce(fn, delay) {
+  let timer = null;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString('en-US', { hour12: false });
+}
+
+function saveSession() {
+  const session = {
+    content: editor.value,
+    filename: currentFilePath,
+    cursorPosition: editor.selectionStart,
+    timestamp: Date.now()
+  };
+
+  try {
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(session));
+    autosaveStatus.textContent = `Saved ${formatTime(new Date())}`;
+    // Clear the "Saved" message after 5 seconds
+    setTimeout(() => {
+      if (autosaveStatus.textContent.startsWith('Saved')) {
+        autosaveStatus.textContent = '';
+      }
+    }, 5000);
+  } catch (err) {
+    console.error('Autosave failed:', err);
+    autosaveStatus.textContent = 'Autosave error';
+  }
+}
+
+const scheduleAutosave = debounce(() => {
+  if (autosaveEnabled) {
+    saveSession();
+  }
+}, AUTOSAVE_DELAY);
+
+function forceAutosave() {
+  saveSession();
+}
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(AUTOSAVE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function restoreSession(session) {
+  editor.value = session.content;
+  if (session.filename) {
+    currentFilePath = session.filename;
+    filenameDisplay.textContent = session.filename;
+  }
+  if (typeof session.cursorPosition === 'number') {
+    editor.setSelectionRange(session.cursorPosition, session.cursorPosition);
+  }
+  updateMode();
+}
+
+function promptRestoreSession() {
+  const session = loadSession();
+  if (!session || !session.content) return;
+
+  const timeStr = formatTime(new Date(session.timestamp));
+  const filename = session.filename || 'Untitled';
+
+  if (confirm(`Restore previous session?\n\nFile: ${filename}\nSaved at: ${timeStr}`)) {
+    restoreSession(session);
+    statusText.textContent = 'Session restored';
+  } else {
+    // Clear the saved session if user declines
+    localStorage.removeItem(AUTOSAVE_KEY);
+  }
+}
+
+// ── Autosave Toggle ──
+autosaveCheckbox.checked = autosaveEnabled;
+
+autosaveCheckbox.addEventListener('change', () => {
+  autosaveEnabled = autosaveCheckbox.checked;
+  localStorage.setItem('markflow-autosave-enabled', autosaveEnabled);
+  if (autosaveEnabled) {
+    scheduleAutosave();
+  } else {
+    autosaveStatus.textContent = '';
+  }
+});
+
+// ── Trigger autosave on editor input ──
+editor.addEventListener('input', () => {
+  scheduleAutosave();
+});
 
 // ── Export: PDF ──
 async function exportPDF() {
@@ -388,6 +506,7 @@ editor.addEventListener('keydown', (e) => {
     const end = editor.selectionEnd;
     editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
     editor.selectionStart = editor.selectionEnd = start + 4;
+    scheduleAutosave();
   }
 });
 
@@ -395,3 +514,6 @@ editor.addEventListener('keydown', (e) => {
 initTheme();
 updateMode();
 statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+O to open';
+
+// Check for saved session on load
+promptRestoreSession();

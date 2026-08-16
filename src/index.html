@@ -40,8 +40,17 @@
 
     <!-- Status bar -->
     <div id="statusbar">
-      <span id="status-text">Ready</span>
-      <span id="cursor-pos">Ln 1, Col 1</span>
+      <div id="statusbar-left">
+        <span id="status-text">Ready</span>
+        <span id="autosave-status"></span>
+      </div>
+      <div id="statusbar-right">
+        <label id="autosave-toggle" title="Toggle autosave">
+          <input type="checkbox" id="autosave-checkbox" checked>
+          <span>Autosave</span>
+        </label>
+        <span id="cursor-pos">Ln 1, Col 1</span>
+      </div>
     </div>
   </div>
 

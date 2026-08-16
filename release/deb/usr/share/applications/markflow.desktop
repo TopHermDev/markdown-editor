@@ -1,6 +1,9 @@
 [Desktop Entry]
 Type=Application
 Name=MarkFlow
-Exec=/usr/bin/markflow
+Exec=/usr/bin/markflow %F
 Categories=TextEditor;Utility;
 Terminal=false
+MimeType=text/markdown;text/x-markdown;text/plain;text/x-rst;
+Icon=markflow
+StartupWMClass=markflow
