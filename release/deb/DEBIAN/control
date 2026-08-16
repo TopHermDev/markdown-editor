@@ -1,10 +1,10 @@
 Package: markflow
-Version: 0.3.0
+Version: 0.4.0
 Section: editors
 Priority: optional
 Architecture: amd64
 Depends: libwebkit2gtk-4.1-0, libgtk-3-0
 Maintainer: TopHermDev <noreply@github.com>
 Description: Lightweight markdown reader and editor
- Supports GFM, dark/light mode, PDF and Word export.
+ Supports GFM, dark/light mode, PDF/Word export, autosave.
 Homepage: https://github.com/TopHermDev/markdown-editor

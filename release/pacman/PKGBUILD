@@ -1,7 +1,7 @@
 pkgname=markdown-editor
-pkgver=0.3.0
+pkgver=0.4.0
 pkgrel=1
-pkgdesc='MarkFlow — lightweight markdown editor with GFM, dark mode, PDF/Word export'
+pkgdesc='MarkFlow — markdown editor with GFM, dark mode, PDF/Word, autosave'
 arch=('x86_64')
 url="https://github.com/TopHermDev/markdown-editor"
 license=('MIT')
