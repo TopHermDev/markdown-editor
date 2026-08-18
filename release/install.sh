@@ -1,11 +1,20 @@
 #!/bin/bash
 set -e
 
-VERSION="${1:-0.4.2}"
 REPO="TopHermDev/markdown-editor"
+SYSTEM_INSTALL=false
+VERSION=""
 
-# Default to user-local directories; use --system for system-wide install
-if [[ "$*" == *"--system"* ]]; then
+for arg in "$@"; do
+    case "$arg" in
+        --system) SYSTEM_INSTALL=true ;;
+        -*) echo "Unknown option: $arg"; exit 1 ;;
+        *) VERSION="$arg" ;;
+    esac
+done
+VERSION="${VERSION:-0.4.2}"
+
+if [ "$SYSTEM_INSTALL" = true ]; then
     BINARY="/usr/local/bin/markflow"
     DESKTOP="/usr/local/share/applications/markflow.desktop"
 else
