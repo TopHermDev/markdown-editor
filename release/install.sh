@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="${1:-0.4.1}"
+VERSION="${1:-0.4.2}"
 REPO="TopHermDev/markdown-editor"
 
 # Default to user-local directories; use --system for system-wide install

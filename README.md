@@ -43,15 +43,15 @@ MarkFlow is a minimal, performant markdown editor that runs natively on Linux, m
 **Debian / Ubuntu (.deb)**
 
 ```bash
-sudo dpkg -i markflow_0.4.1_amd64.deb
+sudo dpkg -i markflow_0.4.2_amd64.deb
 sudo apt-get install -f   # install any missing dependencies
 ```
 
 **AppImage**
 
 ```bash
-chmod +x MarkFlow-0.4.1.AppImage
-./MarkFlow-0.4.1.AppImage
+chmod +x MarkFlow-0.4.2.AppImage
+./MarkFlow-0.4.2.AppImage
 ```
 
 **Arch Linux (AUR)**
@@ -66,24 +66,24 @@ makepkg -si
 **install.sh (from source release)**
 
 ```bash
-curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.1/install.sh | bash
+curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.2/install.sh | bash
 ```
 
 Installs to `~/.local/bin` by default (no sudo needed). For a system-wide install to `/usr/local/bin`, pass `--system` (requires root):
 
 ```bash
-curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.1/install.sh | bash -s -- --system
+curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.2/install.sh | bash -s -- --system
 ```
 
 ### macOS
 
-1. Download `MarkFlow-0.4.1.dmg` from [Releases](https://github.com/TopHermDev/markdown-editor/releases)
+1. Download `MarkFlow-0.4.2.dmg` from [Releases](https://github.com/TopHermDev/markdown-editor/releases)
 2. Open the `.dmg` file
 3. Drag **MarkFlow** to your Applications folder
 
 ### Windows
 
-1. Download `MarkFlow-0.4.1-setup.exe` or `MarkFlow-0.4.1.msi` from [Releases](https://github.com/TopHermDev/markdown-editor/releases)
+1. Download `MarkFlow-0.4.2-setup.exe` or `MarkFlow-0.4.2.msi` from [Releases](https://github.com/TopHermDev/markdown-editor/releases)
 2. Run the installer and follow the on-screen prompts
 
 ## Build from Source
