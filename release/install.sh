@@ -12,7 +12,7 @@ for arg in "$@"; do
         *) VERSION="$arg" ;;
     esac
 done
-VERSION="${VERSION:-0.4.2}"
+VERSION="${VERSION:-0.4.3}"
 
 if [ "$SYSTEM_INSTALL" = true ]; then
     BINARY="/usr/local/bin/markflow"
@@ -29,7 +29,18 @@ case "$ARCH" in
     *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
-echo "Installing MarkFlow v${VERSION} (${ARCH})..."
+# Check for existing installation
+if [ -f "$BINARY" ]; then
+    INSTALLED_VER=$("$BINARY" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "unknown")
+    echo "Found existing MarkFlow v${INSTALLED_VER} at ${BINARY}"
+    if [ "$INSTALLED_VER" = "$VERSION" ]; then
+        echo "Already up to date (v${VERSION})."
+        exit 0
+    fi
+    echo "Updating to v${VERSION}..."
+else
+    echo "Installing MarkFlow v${VERSION} (${ARCH})..."
+fi
 
 # Download tarball
 TMPDIR=$(mktemp -d)
@@ -69,13 +80,16 @@ Terminal=false
 StartupNotify=true
 EOF
 
-echo "Installed to $BINARY"
+echo ""
+echo "MarkFlow v${VERSION} installed to ${BINARY}"
 
 # Check PATH
 if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && [[ "$BINARY" == "$HOME/.local/bin/markflow" ]]; then
+    echo ""
     echo "NOTE: ~/.local/bin is not in your PATH."
     echo "Add this to your shell profile (~/.bashrc or ~/.zshrc):"
     echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
 fi
 
+echo ""
 echo "Run with: markflow"

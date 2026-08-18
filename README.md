@@ -43,15 +43,15 @@ MarkFlow is a minimal, performant markdown editor that runs natively on Linux, m
 **Debian / Ubuntu (.deb)**
 
 ```bash
-sudo dpkg -i markflow_0.4.2_amd64.deb
+sudo dpkg -i markflow_0.4.3_amd64.deb
 sudo apt-get install -f   # install any missing dependencies
 ```
 
 **AppImage**
 
 ```bash
-chmod +x MarkFlow-0.4.2.AppImage
-./MarkFlow-0.4.2.AppImage
+chmod +x MarkFlow-0.4.3.AppImage
+./MarkFlow-0.4.3.AppImage
 ```
 
 **Arch Linux (AUR)**
@@ -66,25 +66,39 @@ makepkg -si
 **install.sh (from source release)**
 
 ```bash
-curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.2/install.sh | bash
+curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.3/install.sh | bash
 ```
 
 Installs to `~/.local/bin` by default (no sudo needed). For a system-wide install to `/usr/local/bin`, pass `--system` (requires root):
 
 ```bash
-curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.2/install.sh | bash -s -- --system
+curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.3/install.sh | bash -s -- --system
 ```
 
 ### macOS
 
-1. Download `MarkFlow-0.4.2.dmg` from [Releases](https://github.com/TopHermDev/markdown-editor/releases)
+1. Download `MarkFlow-0.4.3.dmg` from [Releases](https://github.com/TopHermDev/markdown-editor/releases)
 2. Open the `.dmg` file
 3. Drag **MarkFlow** to your Applications folder
 
 ### Windows
 
-1. Download `MarkFlow-0.4.2-setup.exe` or `MarkFlow-0.4.2.msi` from [Releases](https://github.com/TopHermDev/markdown-editor/releases)
+1. Download `MarkFlow-0.4.3-setup.exe` or `MarkFlow-0.4.3.msi` from [Releases](https://github.com/TopHermDev/markdown-editor/releases)
 2. Run the installer and follow the on-screen prompts
+
+### Updating
+
+To update an existing installation, re-run the install command. The script detects your current version and skips if already up to date.
+
+```bash
+# User install
+curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.3/install.sh | bash
+
+# System-wide install
+curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.3/install.sh | bash -s -- --system
+```
+
+For `.deb` packages, download and install the new version — `dpkg` will overwrite the existing files.
 
 ## Build from Source
 
