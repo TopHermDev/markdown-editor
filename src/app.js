@@ -1,6 +1,19 @@
 // ── MarkFlow ──
 // Lightweight markdown reader/editor with GFM support
 
+// ── Toast Notifications ──
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
 let currentFilePath = null;
 let isPreviewMode = false;
 let isDarkMode = true;
@@ -308,8 +321,10 @@ async function exportPDF() {
   try {
     await html2pdf().set(opt).from(container).save();
     statusText.textContent = `Exported: ${filename}.pdf`;
+    showToast(`Exported ${filename}.pdf`, 'success');
   } catch (err) {
     statusText.textContent = `PDF export failed: ${err.message}`;
+    showToast(`PDF export failed: ${err.message}`, 'error');
     console.error('PDF export error:', err);
   }
 }
@@ -448,8 +463,10 @@ async function exportWord() {
     const filename = (currentFilePath || 'untitled').replace(/\.(md|markdown|txt|rst)$/i, '');
     saveAs(blob, `${filename}.docx`);
     statusText.textContent = `Exported: ${filename}.docx`;
+    showToast(`Exported ${filename}.docx`, 'success');
   } catch (err) {
     statusText.textContent = `Word export failed: ${err.message}`;
+    showToast(`Word export failed: ${err.message}`, 'error');
     console.error('Word export error:', err);
   }
 }
