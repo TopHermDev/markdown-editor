@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="${1:-0.4.0}"
+VERSION="${1:-0.4.1}"
 BINARY="/usr/local/bin/markflow"
 DESKTOP="/usr/local/share/applications/markflow.desktop"
 REPO="TopHermDev/markdown-editor"
