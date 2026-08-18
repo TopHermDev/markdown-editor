@@ -2,9 +2,16 @@
 set -e
 
 VERSION="${1:-0.4.1}"
-BINARY="/usr/local/bin/markflow"
-DESKTOP="/usr/local/share/applications/markflow.desktop"
 REPO="TopHermDev/markdown-editor"
+
+# Default to user-local directories; use --system for system-wide install
+if [[ "$*" == *"--system"* ]]; then
+    BINARY="/usr/local/bin/markflow"
+    DESKTOP="/usr/local/share/applications/markflow.desktop"
+else
+    BINARY="$HOME/.local/bin/markflow"
+    DESKTOP="$HOME/.local/share/applications/markflow.desktop"
+fi
 
 ARCH=$(uname -m)
 case "$ARCH" in
@@ -54,4 +61,12 @@ StartupNotify=true
 EOF
 
 echo "Installed to $BINARY"
+
+# Check PATH
+if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && [[ "$BINARY" == "$HOME/.local/bin/markflow" ]]; then
+    echo "NOTE: ~/.local/bin is not in your PATH."
+    echo "Add this to your shell profile (~/.bashrc or ~/.zshrc):"
+    echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+fi
+
 echo "Run with: markflow"

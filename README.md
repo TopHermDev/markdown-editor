@@ -69,6 +69,12 @@ makepkg -si
 curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.1/install.sh | bash
 ```
 
+Installs to `~/.local/bin` by default (no sudo needed). For a system-wide install to `/usr/local/bin`, pass `--system` (requires root):
+
+```bash
+curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.1/install.sh | bash -s -- --system
+```
+
 ### macOS
 
 1. Download `MarkFlow-0.4.1.dmg` from [Releases](https://github.com/TopHermDev/markdown-editor/releases)
