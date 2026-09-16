@@ -534,3 +534,24 @@ statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+O to open';
 
 // Check for saved session on load
 promptRestoreSession();
+
+// ── Handle file opened via OS file association (Linux "Open with") ──
+async function listenForOpenFile() {
+  if (window.__TAURI__ && window.__TAURI__.event) {
+    await window.__TAURI__.event.listen('open-file', (event) => {
+      const filePath = event.payload;
+      if (filePath) {
+        window.__TAURI__.core.invoke('read_file', { path: filePath }).then((content) => {
+          editor.value = content;
+          currentFilePath = filePath;
+          filenameDisplay.textContent = filePath.split('/').pop();
+          statusText.textContent = `Opened: ${filePath}`;
+          updateMode();
+        }).catch((err) => {
+          statusText.textContent = `Failed to open: ${err}`;
+        });
+      }
+    });
+  }
+}
+listenForOpenFile();

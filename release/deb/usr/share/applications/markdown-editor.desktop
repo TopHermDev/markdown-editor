@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Markdown Editor
-Exec=/usr/bin/markdown-editor
+Exec=/usr/bin/markdown-editor %f
 Icon=markdown-editor
 Categories=TextEditor;Utility;
 MimeType=text/markdown;text/x-markdown;
