@@ -38,13 +38,24 @@ const fileInput = document.getElementById('file-input');
 const themeIcon = document.getElementById('theme-icon');
 const autosaveCheckbox = document.getElementById('autosave-checkbox');
 
-// Configure marked for GFM
-marked.setOptions({
+// Configure marked for GFM with syntax highlighting
+marked.use({
   gfm: true,
   breaks: false,
   pedantic: false,
   smartLists: true,
-  smartypants: false
+  smartypants: false,
+  renderer: {
+    code(code, lang, escaped) {
+      const language = (lang || "").trim().split(/\s+/)[0];
+      if (language && hljs.getLanguage(language)) {
+        const highlighted = hljs.highlight(code, { language }).value;
+        return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`;
+      }
+      const auto = hljs.highlightAuto(code).value;
+      return `<pre><code class="hljs">${auto}</code></pre>`;
+    }
+  }
 });
 
 // ── Theme Toggle ──
