@@ -37,6 +37,7 @@ const cursorPos = document.getElementById('cursor-pos');
 const fileInput = document.getElementById('file-input');
 const themeIcon = document.getElementById('theme-icon');
 const autosaveCheckbox = document.getElementById('autosave-checkbox');
+const wordCountDisplay = document.getElementById('word-count');
 
 // Configure marked for GFM with syntax highlighting
 marked.use({
@@ -227,12 +228,15 @@ fileInput.addEventListener('change', async (e) => {
 
   const reader = new FileReader();
   reader.onload = (ev) => {
-    editor.value = ev.target.result;
     currentFilePath = file.name;
     filenameDisplay.textContent = file.name;
+    editor.focus();
+    editor.select();
+    document.execCommand('insertText', false, ev.target.result);
     statusText.textContent = `Opened: ${file.name}`;
     updateMode();
     scheduleAutosave();
+    addToRecentFiles(file.name);
   };
   reader.readAsText(file);
   fileInput.value = '';
@@ -290,6 +294,102 @@ const scheduleAutosave = debounce(() => {
   }
 }, AUTOSAVE_DELAY);
 
+// ── Recent Files ──
+const RECENT_KEY = 'markflow-recent-files';
+const RECENT_MAX = 10;
+
+function getRecentFiles() {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function addToRecentFiles(filename) {
+  if (!filename) return;
+  let recent = getRecentFiles();
+  recent = recent.filter(f => f.toLowerCase() !== filename.toLowerCase());
+  recent.unshift(filename);
+  if (recent.length > RECENT_MAX) recent = recent.slice(0, RECENT_MAX);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
+  renderRecentDropdown();
+}
+
+function clearRecentFiles() {
+  localStorage.removeItem(RECENT_KEY);
+  renderRecentDropdown();
+}
+
+function renderRecentDropdown() {
+  const dropdown = document.getElementById('recent-dropdown');
+  const btn = document.getElementById('btn-recent');
+  if (!dropdown || !btn) return;
+  const recent = getRecentFiles();
+  btn.classList.toggle('has-recent', recent.length > 0);
+  if (recent.length === 0) {
+    dropdown.innerHTML = '<div class="recent-empty">No recent files</div>';
+    return;
+  }
+  dropdown.innerHTML = recent.map(function (f, i) {
+    return '<button class="recent-item" data-file="' + i + '">' + f + '</button>';
+  }).join('') +
+    '<div class="recent-divider"></div>' +
+    '<button class="recent-clear">Clear recent files</button>';
+  dropdown.querySelectorAll('.recent-item').forEach(function (item) {
+    item.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var idx = parseInt(item.dataset.file);
+      var files = getRecentFiles();
+      var name = files[idx];
+      if (name) {
+        showToast('"' + name + '" \u2014 use Open to re-select this file from disk.', 'info');
+      }
+      closeRecentDropdown();
+    });
+  });
+  var clearBtn = dropdown.querySelector('.recent-clear');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      clearRecentFiles();
+    });
+  }
+}
+
+function toggleRecentDropdown() {
+  var dropdown = document.getElementById('recent-dropdown');
+  var isOpen = !dropdown.classList.contains('hidden');
+  if (isOpen) {
+    closeRecentDropdown();
+  } else {
+    renderRecentDropdown();
+    dropdown.classList.remove('hidden');
+  }
+}
+
+function closeRecentDropdown() {
+  var dropdown = document.getElementById('recent-dropdown');
+  if (dropdown) dropdown.classList.add('hidden');
+}
+
+document.addEventListener('click', function (e) {
+  if (!e.target.closest('#recent-wrapper')) {
+    closeRecentDropdown();
+  }
+});
+
+var btnRecent = document.getElementById('btn-recent');
+if (btnRecent) {
+  btnRecent.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleRecentDropdown();
+  });
+}
+
+renderRecentDropdown();
+
 function forceAutosave() {
   saveSession();
 }
@@ -305,11 +405,18 @@ function loadSession() {
 }
 
 function restoreSession(session) {
-  editor.value = session.content;
   if (session.filename) {
     currentFilePath = session.filename;
     filenameDisplay.textContent = session.filename;
   }
+
+  // Build the undo stack with execCommand so Ctrl+Z works from restored state.
+  // Focus the editor, select all existing content (empty on fresh load),
+  // and insert the restored content as a single undo entry.
+  editor.focus();
+  editor.select();
+  document.execCommand('insertText', false, session.content);
+
   if (typeof session.cursorPosition === 'number') {
     editor.setSelectionRange(session.cursorPosition, session.cursorPosition);
   }
@@ -555,6 +662,111 @@ async function exportWord() {
     console.error('Word export error:', err);
   }
 }
+// ── Export: HTML ──
+function exportHTML() {
+  const md = editor.value.trim();
+  if (!md) {
+    statusText.textContent = 'Nothing to export — editor is empty';
+    return;
+  }
+
+  statusText.textContent = 'Generating HTML...';
+
+  try {
+    const rendered = marked.parse(md);
+    const filename = (currentFilePath || 'untitled').replace(/\.(md|markdown|txt|rst)$/i, '');
+
+    const htmlDoc = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${filename}</title>
+  <style>
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-editor: #0f0f23;
+      --bg-code: #1a1a3e;
+      --bg-pre: #0a0a1e;
+      --bg-th: #16213e;
+      --bg-blockquote: #0d1b3e;
+      --border-main: #2a2a5a;
+      --border-hr: #2a2a5a;
+      --border-table: #333;
+      --border-pre: #2a2a5a;
+      --text-primary: #e0e0f0;
+      --text-markdown: #d0d0e0;
+      --text-strong: #fff;
+      --text-em: #ccc;
+      --text-h1: #fff;
+      --text-h2: #f0f0ff;
+      --text-h3: #e0e0ff;
+      --text-h4: #d0d0ff;
+      --text-link: #00d2ff;
+      --text-code: #ff8c00;
+      --text-pre: #d0d0e0;
+      --text-blockquote: #aaa;
+      --accent: #00d2ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 40px 20px;
+      line-height: 1.7;
+    }
+
+    .markdown-body {
+      max-width: 800px;
+      margin: 0 auto;
+      font-size: 15px;
+      color: var(--text-markdown);
+    }
+
+    h1 { font-size: 2em; border-bottom: 1px solid var(--border-hr); padding-bottom: 8px; margin: 24px 0 16px; color: var(--text-h1); }
+    h2 { font-size: 1.5em; border-bottom: 1px solid var(--border-main); padding-bottom: 6px; margin: 20px 0 12px; color: var(--text-h2); }
+    h3 { font-size: 1.25em; margin: 16px 0 8px; color: var(--text-h3); }
+    h4 { font-size: 1em; margin: 12px 0 6px; color: var(--text-h4); }
+    p { margin: 12px 0; }
+    a { color: var(--text-link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text-strong); }
+    em { color: var(--text-em); font-style: italic; }
+    code { background: var(--bg-code); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; color: var(--text-code); }
+    pre { background: var(--bg-pre); border: 1px solid var(--border-pre); border-radius: 6px; padding: 16px; overflow-x: auto; margin: 16px 0; }
+    pre code { background: none; padding: 0; color: var(--text-pre); font-size: 13px; }
+    blockquote { border-left: 3px solid var(--accent); padding: 8px 16px; margin: 12px 0; background: var(--bg-blockquote); color: var(--text-blockquote); }
+    ul, ol { margin: 12px 0; padding-left: 24px; }
+    li { margin: 4px 0; }
+    hr { border: none; border-top: 1px solid var(--border-hr); margin: 24px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    th, td { border: 1px solid var(--border-table); padding: 8px 12px; text-align: left; }
+    th { background: var(--bg-th); color: var(--text-strong); font-weight: 600; }
+    img { max-width: 100%; border-radius: 6px; }
+    input[type="checkbox"] { margin-right: 6px; }
+  </style>
+</head>
+<body>
+  <div class="markdown-body">
+${rendered}
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+    saveAs(blob, `${filename}.html`);
+    statusText.textContent = `Exported: ${filename}.html`;
+    showToast(`Exported ${filename}.html`, 'success');
+  } catch (err) {
+    statusText.textContent = `HTML export failed: ${err.message}`;
+    showToast(`HTML export failed: ${err.message}`, 'error');
+    console.error('HTML export error:', err);
+  }
+}
+
 
 // — Export: HTML —
 function exportHTML() {
@@ -662,6 +874,111 @@ ${rendered}
 }
 
 // ── Inline Markdown Parser for Word ──
+// ── Export: HTML ──
+function exportHTML() {
+  const md = editor.value.trim();
+  if (!md) {
+    statusText.textContent = 'Nothing to export — editor is empty';
+    return;
+  }
+
+  statusText.textContent = 'Generating HTML...';
+
+  try {
+    const rendered = marked.parse(md);
+    const filename = (currentFilePath || 'untitled').replace(/\.(md|markdown|txt|rst)$/i, '');
+
+    const htmlDoc = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${filename}</title>
+  <style>
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-editor: #0f0f23;
+      --bg-code: #1a1a3e;
+      --bg-pre: #0a0a1e;
+      --bg-th: #16213e;
+      --bg-blockquote: #0d1b3e;
+      --border-main: #2a2a5a;
+      --border-hr: #2a2a5a;
+      --border-table: #333;
+      --border-pre: #2a2a5a;
+      --text-primary: #e0e0f0;
+      --text-markdown: #d0d0e0;
+      --text-strong: #fff;
+      --text-em: #ccc;
+      --text-h1: #fff;
+      --text-h2: #f0f0ff;
+      --text-h3: #e0e0ff;
+      --text-h4: #d0d0ff;
+      --text-link: #00d2ff;
+      --text-code: #ff8c00;
+      --text-pre: #d0d0e0;
+      --text-blockquote: #aaa;
+      --accent: #00d2ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 40px 20px;
+      line-height: 1.7;
+    }
+
+    .markdown-body {
+      max-width: 800px;
+      margin: 0 auto;
+      font-size: 15px;
+      color: var(--text-markdown);
+    }
+
+    h1 { font-size: 2em; border-bottom: 1px solid var(--border-hr); padding-bottom: 8px; margin: 24px 0 16px; color: var(--text-h1); }
+    h2 { font-size: 1.5em; border-bottom: 1px solid var(--border-main); padding-bottom: 6px; margin: 20px 0 12px; color: var(--text-h2); }
+    h3 { font-size: 1.25em; margin: 16px 0 8px; color: var(--text-h3); }
+    h4 { font-size: 1em; margin: 12px 0 6px; color: var(--text-h4); }
+    p { margin: 12px 0; }
+    a { color: var(--text-link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text-strong); }
+    em { color: var(--text-em); font-style: italic; }
+    code { background: var(--bg-code); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; color: var(--text-code); }
+    pre { background: var(--bg-pre); border: 1px solid var(--border-pre); border-radius: 6px; padding: 16px; overflow-x: auto; margin: 16px 0; }
+    pre code { background: none; padding: 0; color: var(--text-pre); font-size: 13px; }
+    blockquote { border-left: 3px solid var(--accent); padding: 8px 16px; margin: 12px 0; background: var(--bg-blockquote); color: var(--text-blockquote); }
+    ul, ol { margin: 12px 0; padding-left: 24px; }
+    li { margin: 4px 0; }
+    hr { border: none; border-top: 1px solid var(--border-hr); margin: 24px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    th, td { border: 1px solid var(--border-table); padding: 8px 12px; text-align: left; }
+    th { background: var(--bg-th); color: var(--text-strong); font-weight: 600; }
+    img { max-width: 100%; border-radius: 6px; }
+    input[type="checkbox"] { margin-right: 6px; }
+  </style>
+</head>
+<body>
+  <div class="markdown-body">
+${rendered}
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+    saveAs(blob, `${filename}.html`);
+    statusText.textContent = `Exported: ${filename}.html`;
+    showToast(`Exported ${filename}.html`, 'success');
+  } catch (err) {
+    statusText.textContent = `HTML export failed: ${err.message}`;
+    showToast(`HTML export failed: ${err.message}`, 'error');
+    console.error('HTML export error:', err);
+  }
+}
+
 function parseInlineMarkdown(text) {
   // Simple inline parser: bold, italic, code, links
   // Returns an array of TextRun objects for docx
@@ -686,6 +1003,7 @@ function parseInlineMarkdown(text) {
 // ── Cursor Position Tracking ──
 editor.addEventListener('input', () => {
   updateCursorPos();
+  updateWordCount();
 });
 
 editor.addEventListener('click', () => {
@@ -704,6 +1022,64 @@ function updateCursorPos() {
   const col = lines[lines.length - 1].length + 1;
   cursorPos.textContent = `Ln ${line}, Col ${col}`;
 }
+
+// ─ Word & Character Count ─
+function updateWordCount() {
+  const text = editor.value;
+  const chars = text.length;
+  const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+  wordCountDisplay.textContent = `${words} words, ${chars} chars`;
+}
+
+// ── Tab key support ──
+// ── Image Drag & Drop / Paste ──
+function insertImageAtCursor(dataUri, fileName) {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const md = `![${fileName}](${dataUri})`;
+  editor.value = editor.value.substring(0, start) + md + editor.value.substring(end);
+  editor.selectionStart = editor.selectionEnd = start + md.length;
+  scheduleAutosave();
+  updateCursorPos();
+  showToast(`Image "${fileName}" inserted`);
+}
+
+function handleImageFile(file) {
+  if (!file || !file.type.startsWith('image/')) return false;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    insertImageAtCursor(ev.target.result, file.name || 'pasted-image');
+  };
+  reader.readAsDataURL(file);
+  return true;
+}
+
+editor.addEventListener('paste', (e) => {
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      handleImageFile(item.getAsFile());
+      return;
+    }
+  }
+});
+
+editor.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+});
+
+editor.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const files = e.dataTransfer && e.dataTransfer.files;
+  if (!files || files.length === 0) return;
+  for (const file of files) {
+    if (handleImageFile(file)) break;
+  }
+});
+
 
 // ── Find & Replace ──
 const findBar = document.getElementById('find-bar');
@@ -881,6 +1257,7 @@ findReplaceToggle.addEventListener('click', () => {
 // ── Keyboard Shortcuts ── (extended for find/replace)
 // Override the existing keydown listener to add Ctrl+F / Ctrl+H
 document.removeEventListener('keydown', null); // no-op; we extend below
+
 editor.addEventListener('keydown', (e) => {
   if (e.key === 'Tab') {
     e.preventDefault();
@@ -895,7 +1272,10 @@ editor.addEventListener('keydown', (e) => {
 // ── Init ──
 initTheme();
 updateMode();
+updateWordCount();
+statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+O to open';
 statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+Enter for split';
+
 
 // Check for saved session on load
 promptRestoreSession();
@@ -907,11 +1287,14 @@ async function listenForOpenFile() {
       const filePath = event.payload;
       if (filePath) {
         window.__TAURI__.core.invoke('read_file', { path: filePath }).then((content) => {
-          editor.value = content;
           currentFilePath = filePath;
           filenameDisplay.textContent = filePath.split('/').pop();
+          editor.focus();
+          editor.select();
+          document.execCommand('insertText', false, content);
           statusText.textContent = `Opened: ${filePath}`;
           updateMode();
+          addToRecentFiles(filePath.split('/').pop());
         }).catch((err) => {
           statusText.textContent = `Failed to open: ${err}`;
         });
@@ -920,6 +1303,181 @@ async function listenForOpenFile() {
   }
 }
 listenForOpenFile();
+
+// ── File Tree Sidebar ──
+const sidebar = document.getElementById('sidebar');
+const fileTree = document.getElementById('file-tree');
+const btnSidebar = document.getElementById('btn-sidebar');
+const btnBrowse = document.getElementById('btn-browse');
+const sidebarRootName = document.getElementById('sidebar-root-name');
+
+let sidebarVisible = false;
+let sidebarRootPath = null;
+let activeFilePath = null;
+
+function toggleSidebar() {
+  sidebarVisible = !sidebarVisible;
+  sidebar.classList.toggle('hidden', !sidebarVisible);
+  btnSidebar.classList.toggle('active', sidebarVisible);
+}
+
+btnSidebar.addEventListener('click', toggleSidebar);
+
+// Ctrl+B to toggle sidebar
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+    e.preventDefault();
+    toggleSidebar();
+  }
+});
+
+// Browse folder via Tauri dialog
+btnBrowse.addEventListener('click', async () => {
+  if (!window.__TAURI__ || !window.__TAURI__.dialog) {
+    showToast('Folder picker requires Tauri runtime', 'error');
+    return;
+  }
+
+  try {
+    const selected = await window.__TAURI__.dialog.open({
+      directory: true,
+      multiple: false,
+      title: 'Select folder to browse'
+    });
+
+    if (selected) {
+      const folderPath = typeof selected === 'string' ? selected : selected;
+      sidebarRootPath = folderPath;
+      const folderName = folderPath.split('/').pop();
+      sidebarRootName.textContent = folderName;
+      await renderFileTree(folderPath, fileTree);
+    }
+  } catch (err) {
+    showToast('Failed to open folder: ' + err, 'error');
+  }
+});
+
+// Render a directory listing into a container element
+async function renderFileTree(dirPath, container) {
+  container.innerHTML = '';
+
+  if (!window.__TAURI__ || !window.__TAURI__.core) {
+    container.innerHTML = '<div class="tree-item" style="color:var(--text-muted)">Tauri not available</div>';
+    return;
+  }
+
+  try {
+    const entries = await window.__TAURI__.core.invoke('list_directory', { path: dirPath });
+
+    if (!entries || entries.length === 0) {
+      container.innerHTML = '<div class="tree-item" style="color:var(--text-muted)">Empty folder</div>';
+      return;
+    }
+
+    for (const entry of entries) {
+      const item = document.createElement('div');
+      item.className = 'tree-item';
+      item.dataset.path = entry.path;
+      item.dataset.isDir = entry.is_dir;
+
+      if (!entry.is_dir && entry.path === activeFilePath) {
+        item.classList.add('active');
+      }
+
+      const icon = document.createElement('span');
+      icon.className = 'tree-icon';
+      icon.textContent = entry.is_dir ? '\u{1F4C1}' : getFileIcon(entry.name);
+
+      const label = document.createElement('span');
+      label.className = 'tree-label';
+      label.textContent = entry.name;
+
+      item.appendChild(icon);
+      item.appendChild(label);
+
+      if (entry.is_dir) {
+        // Directory: toggle expand/collapse on click
+        const childContainer = document.createElement('div');
+        childContainer.className = 'tree-children collapsed';
+
+        item.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const isCollapsed = childContainer.classList.contains('collapsed');
+          if (isCollapsed) {
+            childContainer.classList.remove('collapsed');
+            icon.textContent = '\u{1F4C2}';
+            // Lazy-load children if empty
+            if (childContainer.children.length === 0) {
+              await renderFileTree(entry.path, childContainer);
+            }
+          } else {
+            childContainer.classList.add('collapsed');
+            icon.textContent = '\u{1F4C1}';
+          }
+        });
+
+        container.appendChild(item);
+        container.appendChild(childContainer);
+      } else {
+        // File: open in editor on click
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openFileFromTree(entry.path);
+        });
+        container.appendChild(item);
+      }
+    }
+  } catch (err) {
+    container.innerHTML = '<div class="tree-item" style="color:var(--text-muted)">Error: ' + err + '</div>';
+  }
+}
+
+// Get an icon character based on file extension
+function getFileIcon(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  const iconMap = {
+    md: '\u{1F4DD}', markdown: '\u{1F4DD}', txt: '\u{1F4C4}', rst: '\u{1F4C4}',
+    js: '\u{1F4DC}', ts: '\u{1F4DC}', jsx: '\u{1F4DC}', tsx: '\u{1F4DC}',
+    json: '\u{2699}\u{FE0F}', yaml: '\u{2699}\u{FE0F}', yml: '\u{2699}\u{FE0F}', toml: '\u{2699}\u{FE0F}',
+    css: '\u{1F3A8}', scss: '\u{1F3A8}', less: '\u{1F3A8}', html: '\u{1F310}',
+    py: '\u{1F40D}', rs: '\u{1F980}', go: '\u{1F537}', rb: '\u{1F48E}',
+    sh: '\u{1F5A5}\u{FE0F}', bash: '\u{1F5A5}\u{FE0F}', zsh: '\u{1F5A5}\u{FE0F}',
+    png: '\u{1F5BC}\u{FE0F}', jpg: '\u{1F5BC}\u{FE0F}', jpeg: '\u{1F5BC}\u{FE0F}', gif: '\u{1F5BC}\u{FE0F}', svg: '\u{1F5BC}\u{FE0F}',
+    pdf: '\u{1F155}', doc: '\u{1F4D8}', docx: '\u{1F4D8}',
+  };
+  return iconMap[ext] || '\u{1F4C4}';
+}
+
+// Open a file from the tree into the editor via Tauri read_file
+async function openFileFromTree(filePath) {
+  if (!window.__TAURI__ || !window.__TAURI__.core) {
+    showToast('Tauri not available', 'error');
+    return;
+  }
+
+  try {
+    const content = await window.__TAURI__.core.invoke('read_file', { path: filePath });
+    currentFilePath = filePath;
+    activeFilePath = filePath;
+    filenameDisplay.textContent = filePath.split('/').pop();
+    editor.focus();
+    editor.select();
+    document.execCommand('insertText', false, content);
+    statusText.textContent = 'Opened: ' + filePath;
+    updateMode();
+    scheduleAutosave();
+
+    // Highlight the active file in the tree
+    document.querySelectorAll('.tree-item.active').forEach(el => el.classList.remove('active'));
+    const targetItem = document.querySelector('.tree-item[data-path="' + CSS.escape(filePath) + '"]');
+    if (targetItem) targetItem.classList.add('active');
+  } catch (err) {
+    showToast('Failed to open file: ' + err, 'error');
+  }
+}
+
+// ── Handle file opened via OS file association (Linux "Open with") ──
+
 
 // ── Custom Preview CSS Themes ──
 const CUSTOM_CSS_KEY = 'markflow-custom-css';
