@@ -693,6 +693,55 @@ function updateCursorPos() {
   cursorPos.textContent = `Ln ${line}, Col ${col}`;
 }
 
+// ── Image Drag & Drop / Paste ──
+function insertImageAtCursor(dataUri, fileName) {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const md = `![${fileName}](${dataUri})`;
+  editor.value = editor.value.substring(0, start) + md + editor.value.substring(end);
+  editor.selectionStart = editor.selectionEnd = start + md.length;
+  scheduleAutosave();
+  updateCursorPos();
+  showToast(`Image "${fileName}" inserted`);
+}
+
+function handleImageFile(file) {
+  if (!file || !file.type.startsWith('image/')) return false;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    insertImageAtCursor(ev.target.result, file.name || 'pasted-image');
+  };
+  reader.readAsDataURL(file);
+  return true;
+}
+
+editor.addEventListener('paste', (e) => {
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      handleImageFile(item.getAsFile());
+      return;
+    }
+  }
+});
+
+editor.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+});
+
+editor.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const files = e.dataTransfer && e.dataTransfer.files;
+  if (!files || files.length === 0) return;
+  for (const file of files) {
+    if (handleImageFile(file)) break;
+  }
+});
+
+
 // ── Find & Replace ──
 const findBar = document.getElementById('find-bar');
 const findInput = document.getElementById('find-input');
