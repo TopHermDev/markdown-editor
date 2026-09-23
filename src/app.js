@@ -226,9 +226,11 @@ fileInput.addEventListener('change', async (e) => {
 
   const reader = new FileReader();
   reader.onload = (ev) => {
-    editor.value = ev.target.result;
     currentFilePath = file.name;
     filenameDisplay.textContent = file.name;
+    editor.focus();
+    editor.select();
+    document.execCommand('insertText', false, ev.target.result);
     statusText.textContent = `Opened: ${file.name}`;
     updateMode();
     scheduleAutosave();
@@ -304,11 +306,18 @@ function loadSession() {
 }
 
 function restoreSession(session) {
-  editor.value = session.content;
   if (session.filename) {
     currentFilePath = session.filename;
     filenameDisplay.textContent = session.filename;
   }
+
+  // Build the undo stack with execCommand so Ctrl+Z works from restored state.
+  // Focus the editor, select all existing content (empty on fresh load),
+  // and insert the restored content as a single undo entry.
+  editor.focus();
+  editor.select();
+  document.execCommand('insertText', false, session.content);
+
   if (typeof session.cursorPosition === 'number') {
     editor.setSelectionRange(session.cursorPosition, session.cursorPosition);
   }
@@ -801,9 +810,11 @@ async function listenForOpenFile() {
       const filePath = event.payload;
       if (filePath) {
         window.__TAURI__.core.invoke('read_file', { path: filePath }).then((content) => {
-          editor.value = content;
           currentFilePath = filePath;
           filenameDisplay.textContent = filePath.split('/').pop();
+          editor.focus();
+          editor.select();
+          document.execCommand('insertText', false, content);
           statusText.textContent = `Opened: ${filePath}`;
           updateMode();
         }).catch((err) => {
