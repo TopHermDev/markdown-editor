@@ -13,6 +13,10 @@
     <div id="toolbar">
       <div id="toolbar-left">
         <button id="btn-open" title="Open file (Ctrl+O)">Open</button>
+        <div id="recent-wrapper">
+          <button id="btn-recent" title="Recent files">Recent</button>
+          <div id="recent-dropdown" class="hidden"></div>
+        </div>
         <button id="btn-save" title="Save (Ctrl+S)">Save</button>
         <button id="btn-export-pdf" title="Export as PDF">PDF</button>
         <button id="btn-export-word" title="Export as Word">Word</button>
@@ -69,6 +73,31 @@
       </div>
       <div id="statusbar-right">
         <label id="autosave-toggle" title="Toggle autosave">
+
+  <!-- Custom Theme Modal -->
+  <div id="theme-modal-overlay" class="hidden">
+    <div id="theme-modal">
+      <div id="theme-modal-header">
+        <h3>Preview Theme</h3>
+        <button id="theme-modal-close" title="Close">✕</button>
+      </div>
+      <div id="theme-modal-body">
+        <div id="theme-presets">
+          <span class="theme-presets-label">Presets:</span>
+          <button class="preset-btn" data-preset="github">GitHub</button>
+          <button class="preset-btn" data-preset="solarized-dark">Solarized Dark</button>
+          <button class="preset-btn" data-preset="solarized-light">Solarized Light</button>
+          <button class="preset-btn" data-preset="nord">Nord</button>
+          <button class="preset-btn" data-preset="dracula">Dracula</button>
+        </div>
+        <textarea id="theme-css-editor" spellcheck="false" placeholder="/* Custom CSS for the preview pane */"></textarea>
+      </div>
+      <div id="theme-modal-footer">
+        <button id="theme-reset-btn" title="Reset to default (no custom CSS)">Reset</button>
+        <button id="theme-apply-btn" title="Apply custom CSS">Apply</button>
+      </div>
+    </div>
+  </div>
           <input type="checkbox" id="autosave-checkbox" checked>
           <span>Autosave</span>
         </label>
