@@ -12,6 +12,7 @@
     <!-- Toolbar -->
     <div id="toolbar">
       <div id="toolbar-left">
+        <button id="btn-sidebar" title="Toggle sidebar (Ctrl+B)">&#9776;</button>
         <button id="btn-open" title="Open file (Ctrl+O)">Open</button>
         <button id="btn-save" title="Save (Ctrl+S)">Save</button>
         <button id="btn-export-pdf" title="Export as PDF">PDF</button>
@@ -27,7 +28,7 @@
           Split
         </button>
         <button id="btn-theme" title="Toggle dark/light mode">
-          <span id="theme-icon">☀️</span>
+          <span id="theme-icon">&#9728;&#65039;</span>
         </button>
       </div>
     </div>
@@ -37,12 +38,12 @@
       <div id="find-bar-row">
         <input type="text" id="find-input" placeholder="Find" autocomplete="off" spellcheck="false">
         <span id="find-count"></span>
-        <button id="find-prev" title="Previous match (Shift+Enter)">▲</button>
-        <button id="find-next" title="Next match (Enter)">▼</button>
+        <button id="find-prev" title="Previous match (Shift+Enter)">&#9650;</button>
+        <button id="find-next" title="Next match (Enter)">&#9660;</button>
         <button id="find-case" title="Match case" class="find-toggle">Aa</button>
         <button id="find-word" title="Whole word" class="find-toggle">W</button>
         <button id="find-replace-toggle" title="Toggle replace (Ctrl+H)">Replace</button>
-        <button id="find-close" title="Close (Escape)">✕</button>
+        <button id="find-close" title="Close (Escape)">&#10005;</button>
       </div>
       <div id="replace-bar-row" class="hidden">
         <input type="text" id="replace-input" placeholder="Replace" autocomplete="off" spellcheck="false">
@@ -53,6 +54,15 @@
 
     <!-- Editor -->
     <div id="editor-container">
+      <!-- File Tree Sidebar -->
+      <aside id="sidebar" class="sidebar hidden">
+        <div class="sidebar-header">
+          <button id="btn-browse" title="Select folder">Browse&#8230;</button>
+          <span id="sidebar-root-name" class="sidebar-root-name"></span>
+        </div>
+        <div id="file-tree" class="file-tree"></div>
+      </aside>
+
       <div id="editor-pane">
         <textarea id="editor" spellcheck="false" placeholder="Type markdown here..."></textarea>
       </div>
