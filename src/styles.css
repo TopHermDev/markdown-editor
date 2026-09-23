@@ -396,6 +396,81 @@ body {
 /* ── Transition ── */
 #preview-pane { transition: opacity 0.15s ease; }
 
+/* ── Recent Files Dropdown ── */
+#recent-wrapper { position: relative; }
+
+#recent-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-main);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 200;
+  padding: 4px 0;
+}
+
+#recent-dropdown .recent-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 14px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#recent-dropdown .recent-item:hover {
+  background: var(--bg-button-hover);
+  color: var(--text-strong);
+}
+
+#recent-dropdown .recent-empty {
+  padding: 10px 14px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+#recent-dropdown .recent-divider {
+  height: 1px;
+  background: var(--border-main);
+  margin: 4px 0;
+}
+
+#recent-dropdown .recent-clear {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 14px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#recent-dropdown .recent-clear:hover { color: #ff6b6b; }
+
+#btn-recent { position: relative; }
+
+#btn-recent.has-recent::after {
+  content: '▾';
+  font-size: 10px;
+  margin-left: 2px;
+  opacity: 0.6;
+}
+
 /* ── Find & Replace Bar ── */
 #find-bar {
   position: sticky;

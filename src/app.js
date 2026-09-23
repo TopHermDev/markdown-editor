@@ -222,6 +222,7 @@ fileInput.addEventListener('change', async (e) => {
     statusText.textContent = `Opened: ${file.name}`;
     updateMode();
     scheduleAutosave();
+    addToRecentFiles(file.name);
   };
   reader.readAsText(file);
   fileInput.value = '';
@@ -278,6 +279,102 @@ const scheduleAutosave = debounce(() => {
     saveSession();
   }
 }, AUTOSAVE_DELAY);
+
+// ── Recent Files ──
+const RECENT_KEY = 'markflow-recent-files';
+const RECENT_MAX = 10;
+
+function getRecentFiles() {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function addToRecentFiles(filename) {
+  if (!filename) return;
+  let recent = getRecentFiles();
+  recent = recent.filter(f => f.toLowerCase() !== filename.toLowerCase());
+  recent.unshift(filename);
+  if (recent.length > RECENT_MAX) recent = recent.slice(0, RECENT_MAX);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
+  renderRecentDropdown();
+}
+
+function clearRecentFiles() {
+  localStorage.removeItem(RECENT_KEY);
+  renderRecentDropdown();
+}
+
+function renderRecentDropdown() {
+  const dropdown = document.getElementById('recent-dropdown');
+  const btn = document.getElementById('btn-recent');
+  if (!dropdown || !btn) return;
+  const recent = getRecentFiles();
+  btn.classList.toggle('has-recent', recent.length > 0);
+  if (recent.length === 0) {
+    dropdown.innerHTML = '<div class="recent-empty">No recent files</div>';
+    return;
+  }
+  dropdown.innerHTML = recent.map(function (f, i) {
+    return '<button class="recent-item" data-file="' + i + '">' + f + '</button>';
+  }).join('') +
+    '<div class="recent-divider"></div>' +
+    '<button class="recent-clear">Clear recent files</button>';
+  dropdown.querySelectorAll('.recent-item').forEach(function (item) {
+    item.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var idx = parseInt(item.dataset.file);
+      var files = getRecentFiles();
+      var name = files[idx];
+      if (name) {
+        showToast('"' + name + '" \u2014 use Open to re-select this file from disk.', 'info');
+      }
+      closeRecentDropdown();
+    });
+  });
+  var clearBtn = dropdown.querySelector('.recent-clear');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      clearRecentFiles();
+    });
+  }
+}
+
+function toggleRecentDropdown() {
+  var dropdown = document.getElementById('recent-dropdown');
+  var isOpen = !dropdown.classList.contains('hidden');
+  if (isOpen) {
+    closeRecentDropdown();
+  } else {
+    renderRecentDropdown();
+    dropdown.classList.remove('hidden');
+  }
+}
+
+function closeRecentDropdown() {
+  var dropdown = document.getElementById('recent-dropdown');
+  if (dropdown) dropdown.classList.add('hidden');
+}
+
+document.addEventListener('click', function (e) {
+  if (!e.target.closest('#recent-wrapper')) {
+    closeRecentDropdown();
+  }
+});
+
+var btnRecent = document.getElementById('btn-recent');
+if (btnRecent) {
+  btnRecent.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleRecentDropdown();
+  });
+}
+
+renderRecentDropdown();
 
 function forceAutosave() {
   saveSession();
@@ -901,6 +998,7 @@ async function listenForOpenFile() {
           filenameDisplay.textContent = filePath.split('/').pop();
           statusText.textContent = `Opened: ${filePath}`;
           updateMode();
+          addToRecentFiles(filePath.split('/').pop());
         }).catch((err) => {
           statusText.textContent = `Failed to open: ${err}`;
         });
