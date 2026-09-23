@@ -29,6 +29,25 @@
       </div>
     </div>
 
+    <!-- Find & Replace Bar -->
+    <div id="find-bar" class="hidden">
+      <div id="find-bar-row">
+        <input type="text" id="find-input" placeholder="Find" autocomplete="off" spellcheck="false">
+        <span id="find-count"></span>
+        <button id="find-prev" title="Previous match (Shift+Enter)">▲</button>
+        <button id="find-next" title="Next match (Enter)">▼</button>
+        <button id="find-case" title="Match case" class="find-toggle">Aa</button>
+        <button id="find-word" title="Whole word" class="find-toggle">W</button>
+        <button id="find-replace-toggle" title="Toggle replace (Ctrl+H)">Replace</button>
+        <button id="find-close" title="Close (Escape)">✕</button>
+      </div>
+      <div id="replace-bar-row" class="hidden">
+        <input type="text" id="replace-input" placeholder="Replace" autocomplete="off" spellcheck="false">
+        <button id="replace-one" title="Replace">Replace</button>
+        <button id="replace-all" title="Replace all">All</button>
+      </div>
+    </div>
+
     <!-- Editor -->
     <div id="editor-container">
       <div id="editor-pane">
