@@ -138,6 +138,35 @@ document.addEventListener('keydown', (e) => {
     forceAutosave();
     return;
   }
+
+  // Ctrl+F: Find
+  if ((e.ctrlKey || e.metaKey) && key === 'f') {
+    e.preventDefault();
+    openFindBar(false);
+    return;
+  }
+
+  // Ctrl+H: Find & Replace
+  if ((e.ctrlKey || e.metaKey) && key === 'h') {
+    e.preventDefault();
+    openFindBar(true);
+    return;
+  }
+
+  // Escape: close find bar if open, otherwise toggle preview
+  if (key === 'escape') {
+    if (!findBar.classList.contains('hidden')) {
+      e.preventDefault();
+      closeFindBar();
+      return;
+    }
+    e.preventDefault();
+    if (!isPreviewMode) {
+      isPreviewMode = true;
+      updateMode();
+    }
+    return;
+  }
 });
 
 // ── File Operations ──
@@ -515,7 +544,182 @@ function updateCursorPos() {
   cursorPos.textContent = `Ln ${line}, Col ${col}`;
 }
 
-// ── Tab key support ──
+// ── Find & Replace ──
+const findBar = document.getElementById('find-bar');
+const findInput = document.getElementById('find-input');
+const findCount = document.getElementById('find-count');
+const findPrevBtn = document.getElementById('find-prev');
+const findNextBtn = document.getElementById('find-next');
+const findCaseBtn = document.getElementById('find-case');
+const findWordBtn = document.getElementById('find-word');
+const findReplaceToggle = document.getElementById('find-replace-toggle');
+const findCloseBtn = document.getElementById('find-close');
+const replaceBarRow = document.getElementById('replace-bar-row');
+const replaceInput = document.getElementById('replace-input');
+const replaceOneBtn = document.getElementById('replace-one');
+const replaceAllBtn = document.getElementById('replace-all');
+
+let findMatches = [];
+let findIndex = -1;
+let findCaseSensitive = false;
+let findWholeWord = false;
+
+function openFindBar(withReplace) {
+  findBar.classList.remove('hidden');
+  if (withReplace) replaceBarRow.classList.remove('hidden');
+  findInput.focus();
+  findInput.select();
+}
+
+function closeFindBar() {
+  findBar.classList.add('hidden');
+  replaceBarRow.classList.add('hidden');
+  findMatches = [];
+  findIndex = -1;
+  findCount.textContent = '';
+  editor.focus();
+}
+
+function getMatches(query) {
+  if (!query) return [];
+  const text = editor.value;
+  const matches = [];
+  let flags = findCaseSensitive ? 'g' : 'gi';
+  let pattern = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (findWholeWord) pattern = '\\b' + pattern + '\\b';
+  const regex = new RegExp(pattern, flags);
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    matches.push({ start: m.index, end: m.index + m[0].length, text: m[0] });
+    if (matches.length > 10000) break; // safety limit
+  }
+  return matches;
+}
+
+function updateFindResults() {
+  const query = findInput.value;
+  findMatches = getMatches(query);
+  findIndex = findMatches.length > 0 ? 0 : -1;
+  updateFindCount();
+  if (findMatches.length > 0) highlightCurrentMatch();
+}
+
+function updateFindCount() {
+  if (!findInput.value) {
+    findCount.textContent = '';
+    return;
+  }
+  if (findMatches.length === 0) {
+    findCount.textContent = 'No results';
+    findCount.style.color = '#ff6b6b';
+  } else {
+    findCount.textContent = `${findIndex + 1} of ${findMatches.length}`;
+    findCount.style.color = '';
+  }
+}
+
+function highlightCurrentMatch() {
+  if (findIndex < 0 || findIndex >= findMatches.length) return;
+  const match = findMatches[findIndex];
+  editor.focus();
+  editor.setSelectionRange(match.start, match.end);
+  // Scroll the match into view
+  const text = editor.value.substring(0, match.start);
+  const lines = text.split('\n');
+  const lineNum = lines.length - 1;
+  const lineHeight = parseInt(getComputedStyle(editor).lineHeight);
+  const targetScroll = lineNum * lineHeight - editor.clientHeight / 3;
+  editor.scrollTop = Math.max(0, targetScroll);
+}
+
+function findNext() {
+  if (findMatches.length === 0) return;
+  findIndex = (findIndex + 1) % findMatches.length;
+  updateFindCount();
+  highlightCurrentMatch();
+}
+
+function findPrev() {
+  if (findMatches.length === 0) return;
+  findIndex = (findIndex - 1 + findMatches.length) % findMatches.length;
+  updateFindCount();
+  highlightCurrentMatch();
+}
+
+function replaceCurrent() {
+  if (findIndex < 0 || findMatches.length === 0) return;
+  const match = findMatches[findIndex];
+  const replacement = replaceInput.value;
+  editor.value = editor.value.substring(0, match.start) + replacement + editor.value.substring(match.end);
+  scheduleAutosave();
+  updateFindResults();
+}
+
+function replaceAllMatches() {
+  if (findMatches.length === 0) return;
+  const query = findInput.value;
+  const replacement = replaceInput.value;
+  let flags = findCaseSensitive ? 'g' : 'gi';
+  let pattern = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (findWholeWord) pattern = '\\b' + pattern + '\\b';
+  const regex = new RegExp(pattern, flags);
+  editor.value = editor.value.replace(regex, replacement);
+  scheduleAutosave();
+  updateFindResults();
+}
+
+// Event listeners for find bar
+findInput.addEventListener('input', updateFindResults);
+
+findInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (e.shiftKey) findPrev();
+    else findNext();
+  }
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    closeFindBar();
+  }
+});
+
+replaceInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    replaceCurrent();
+  }
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    closeFindBar();
+  }
+});
+
+findNextBtn.addEventListener('click', findNext);
+findPrevBtn.addEventListener('click', findPrev);
+findCloseBtn.addEventListener('click', closeFindBar);
+replaceOneBtn.addEventListener('click', replaceCurrent);
+replaceAllBtn.addEventListener('click', replaceAllMatches);
+
+findCaseBtn.addEventListener('click', () => {
+  findCaseSensitive = !findCaseSensitive;
+  findCaseBtn.classList.toggle('active', findCaseSensitive);
+  updateFindResults();
+});
+
+findWordBtn.addEventListener('click', () => {
+  findWholeWord = !findWholeWord;
+  findWordBtn.classList.toggle('active', findWholeWord);
+  updateFindResults();
+});
+
+findReplaceToggle.addEventListener('click', () => {
+  const isVisible = !replaceBarRow.classList.contains('hidden');
+  replaceBarRow.classList.toggle('hidden', isVisible);
+});
+
+// ── Keyboard Shortcuts ── (extended for find/replace)
+// Override the existing keydown listener to add Ctrl+F / Ctrl+H
+document.removeEventListener('keydown', null); // no-op; we extend below
 editor.addEventListener('keydown', (e) => {
   if (e.key === 'Tab') {
     e.preventDefault();
