@@ -32,6 +32,7 @@
         <button id="btn-split" title="Toggle split view (Ctrl+Enter)">
           Split
         </button>
+        <button id="btn-custom-theme" title="Custom preview CSS themes">Themes</button>
         <button id="btn-theme" title="Toggle dark/light mode">
           <span id="theme-icon">&#9728;&#65039;</span>
         </button>
@@ -118,6 +119,30 @@
     </div>
   </div>
 
+  <!-- Custom Theme Modal -->
+  <div id="theme-modal-overlay" class="hidden">
+    <div id="theme-modal">
+      <div id="theme-modal-header">
+        <h3>Preview Theme</h3>
+        <button id="theme-modal-close" title="Close">X</button>
+      </div>
+      <div id="theme-modal-body">
+        <div id="theme-presets">
+          <span class="theme-presets-label">Presets:</span>
+          <button class="preset-btn" data-preset="github">GitHub</button>
+          <button class="preset-btn" data-preset="solarized-dark">Solarized Dark</button>
+          <button class="preset-btn" data-preset="solarized-light">Solarized Light</button>
+          <button class="preset-btn" data-preset="nord">Nord</button>
+          <button class="preset-btn" data-preset="dracula">Dracula</button>
+        </div>
+        <textarea id="theme-css-editor" spellcheck="false" placeholder="Custom CSS for preview pane"></textarea>
+      </div>
+      <div id="theme-modal-footer">
+        <button id="theme-reset-btn">Reset</button>
+        <button id="theme-apply-btn">Apply</button>
+      </div>
+    </div>
+  </div>
   <!-- File input (hidden) -->
   <input type="file" id="file-input" accept=".md,.markdown,.txt,.rst" style="display:none">
 
