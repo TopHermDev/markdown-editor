@@ -62,6 +62,7 @@ fn list_directory(path: String) -> Result<Vec<DirEntry>, String> {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![read_file, write_file, list_directory])
         .setup(|app| {
             let args: Vec<String> = env::args().collect();
