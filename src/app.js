@@ -814,3 +814,233 @@ async function listenForOpenFile() {
   }
 }
 listenForOpenFile();
+
+// ── Custom Preview CSS Themes ──
+const CUSTOM_CSS_KEY = 'markflow-custom-css';
+
+const PRESET_THEMES = {
+  github: `/* GitHub Style */
+.markdown-body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #24292e;
+  background: #fff;
+}
+.markdown-body h1, .markdown-body h2 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+.markdown-body h1 { font-size: 2em; }
+.markdown-body h2 { font-size: 1.5em; }
+.markdown-body h3 { font-size: 1.25em; }
+.markdown-body code { background: #f6f8fa; padding: 0.2em 0.4em; border-radius: 3px; font-size: 85%; }
+.markdown-body pre { background: #f6f8fa; border-radius: 6px; padding: 16px; overflow-x: auto; }
+.markdown-body pre code { background: none; padding: 0; }
+.markdown-body blockquote { border-left: 0.25em solid #dfe2e5; color: #6a737d; padding: 0 1em; margin: 16px 0; }
+.markdown-body a { color: #0366d6; text-decoration: none; }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body table { border-collapse: collapse; width: 100%; }
+.markdown-body th, .markdown-body td { border: 1px solid #dfe2e5; padding: 6px 13px; }
+.markdown-body th { background: #f6f8fa; font-weight: 600; }
+.markdown-body hr { border: none; border-top: 1px solid #e1e4e8; margin: 24px 0; }`,
+
+  'solarized-dark': `/* Solarized Dark */
+.markdown-body {
+  background: #002b36;
+  color: #839496;
+  font-family: 'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+  color: #93a1a1;
+  border-bottom-color: #586e75;
+}
+.markdown-body h1 { font-size: 2em; border-bottom: 1px solid #586e75; padding-bottom: 0.3em; }
+.markdown-body h2 { font-size: 1.5em; border-bottom: 1px solid #586e75; padding-bottom: 0.2em; }
+.markdown-body h3 { font-size: 1.25em; }
+.markdown-body a { color: #268bd2; text-decoration: none; }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body code { background: #073642; padding: 0.15em 0.4em; border-radius: 3px; color: #cb4b16; }
+.markdown-body pre { background: #073642; border: 1px solid #586e75; border-radius: 6px; padding: 16px; overflow-x: auto; }
+.markdown-body pre code { background: none; color: #839496; padding: 0; }
+.markdown-body blockquote { border-left: 3px solid #268bd2; padding: 0.5em 1em; color: #657b83; margin: 16px 0; }
+.markdown-body strong { color: #93a1a1; }
+.markdown-body em { color: #93a1a1; font-style: italic; }
+.markdown-body table { border-collapse: collapse; width: 100%; }
+.markdown-body th, .markdown-body td { border: 1px solid #586e75; padding: 8px 12px; }
+.markdown-body th { background: #073642; }
+.markdown-body hr { border: none; border-top: 1px solid #586e75; margin: 24px 0; }`,
+
+  'solarized-light': `/* Solarized Light */
+.markdown-body {
+  background: #fdf6e3;
+  color: #657b83;
+  font-family: 'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+  color: #586e75;
+  border-bottom-color: #eee8d5;
+}
+.markdown-body h1 { font-size: 2em; border-bottom: 1px solid #eee8d5; padding-bottom: 0.3em; }
+.markdown-body h2 { font-size: 1.5em; border-bottom: 1px solid #eee8d5; padding-bottom: 0.2em; }
+.markdown-body h3 { font-size: 1.25em; }
+.markdown-body a { color: #268bd2; text-decoration: none; }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body code { background: #eee8d5; padding: 0.15em 0.4em; border-radius: 3px; color: #cb4b16; }
+.markdown-body pre { background: #eee8d5; border: 1px solid #93a1a1; border-radius: 6px; padding: 16px; overflow-x: auto; }
+.markdown-body pre code { background: none; color: #657b83; padding: 0; }
+.markdown-body blockquote { border-left: 3px solid #268bd2; padding: 0.5em 1em; color: #93a1a1; margin: 16px 0; }
+.markdown-body strong { color: #586e75; }
+.markdown-body em { color: #586e75; font-style: italic; }
+.markdown-body table { border-collapse: collapse; width: 100%; }
+.markdown-body th, .markdown-body td { border: 1px solid #93a1a1; padding: 8px 12px; }
+.markdown-body th { background: #eee8d5; }
+.markdown-body hr { border: none; border-top: 1px solid #eee8d5; margin: 24px 0; }`,
+
+  nord: `/* Nord */
+.markdown-body {
+  background: #2e3440;
+  color: #d8dee9;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+  color: #eceff4;
+  border-bottom-color: #4c566a;
+}
+.markdown-body h1 { font-size: 2em; border-bottom: 2px solid #88c0d0; padding-bottom: 0.3em; }
+.markdown-body h2 { font-size: 1.5em; border-bottom: 1px solid #4c566a; padding-bottom: 0.2em; }
+.markdown-body h3 { font-size: 1.25em; color: #88c0d0; }
+.markdown-body a { color: #88c0d0; text-decoration: none; }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body code { background: #3b4252; padding: 0.15em 0.4em; border-radius: 3px; color: #bf616a; font-size: 0.9em; }
+.markdown-body pre { background: #3b4252; border: 1px solid #4c566a; border-radius: 6px; padding: 16px; overflow-x: auto; }
+.markdown-body pre code { background: none; color: #d8dee9; padding: 0; }
+.markdown-body blockquote { border-left: 3px solid #81a1c1; padding: 0.5em 1em; color: #7b88a1; margin: 16px 0; background: rgba(59, 66, 82, 0.5); }
+.markdown-body strong { color: #eceff4; }
+.markdown-body em { color: #a3be8c; font-style: italic; }
+.markdown-body table { border-collapse: collapse; width: 100%; }
+.markdown-body th, .markdown-body td { border: 1px solid #4c566a; padding: 8px 12px; }
+.markdown-body th { background: #3b4252; color: #eceff4; font-weight: 600; }
+.markdown-body hr { border: none; border-top: 1px solid #4c566a; margin: 24px 0; }
+.markdown-body ul, .markdown-body ol { margin: 12px 0; padding-left: 24px; }
+.markdown-body li { margin: 4px 0; }`,
+
+  dracula: `/* Dracula */
+.markdown-body {
+  background: #282a36;
+  color: #f8f8f2;
+  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+  color: #ff79c6;
+  border-bottom-color: #44475a;
+}
+.markdown-body h1 { font-size: 2em; border-bottom: 2px solid #bd93f9; padding-bottom: 0.3em; }
+.markdown-body h2 { font-size: 1.5em; border-bottom: 1px solid #44475a; padding-bottom: 0.2em; color: #bd93f9; }
+.markdown-body h3 { font-size: 1.25em; color: #50fa7b; }
+.markdown-body h4 { color: #f1fa8c; }
+.markdown-body a { color: #8be9fd; text-decoration: none; }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body code { background: #44475a; padding: 0.15em 0.4em; border-radius: 3px; color: #50fa7b; }
+.markdown-body pre { background: #44475a; border: 1px solid #6272a4; border-radius: 6px; padding: 16px; overflow-x: auto; }
+.markdown-body pre code { background: none; color: #f8f8f2; padding: 0; }
+.markdown-body blockquote { border-left: 3px solid #bd93f9; padding: 0.5em 1em; color: #6272a4; margin: 16px 0; }
+.markdown-body strong { color: #ff79c6; }
+.markdown-body em { color: #ffb86c; font-style: italic; }
+.markdown-body table { border-collapse: collapse; width: 100%; }
+.markdown-body th, .markdown-body td { border: 1px solid #44475a; padding: 8px 12px; }
+.markdown-body th { background: #44475a; color: #ff79c6; font-weight: 600; }
+.markdown-body hr { border: none; border-top: 1px solid #44475a; margin: 24px 0; }
+.markdown-body ul, .markdown-body ol { margin: 12px 0; padding-left: 24px; }
+.markdown-body li { margin: 4px 0; }
+.markdown-body li::marker { color: #bd93f9; }`
+};
+
+// Create or get the <style> element for custom preview CSS
+let customStyleEl = document.getElementById('custom-theme-style');
+if (!customStyleEl) {
+  customStyleEl = document.createElement('style');
+  customStyleEl.id = 'custom-theme-style';
+  document.head.appendChild(customStyleEl);
+}
+
+function applyCustomCSS(css) {
+  if (css && css.trim()) {
+    customStyleEl.textContent = css;
+  } else {
+    customStyleEl.textContent = '';
+  }
+}
+
+function loadCustomCSS() {
+  return localStorage.getItem(CUSTOM_CSS_KEY) || '';
+}
+
+function saveCustomCSS(css) {
+  if (css && css.trim()) {
+    localStorage.setItem(CUSTOM_CSS_KEY, css);
+  } else {
+    localStorage.removeItem(CUSTOM_CSS_KEY);
+  }
+}
+
+// ── Theme Modal ──
+const themeModalOverlay = document.getElementById('theme-modal-overlay');
+const themeModalClose = document.getElementById('theme-modal-close');
+const themeCssEditor = document.getElementById('theme-css-editor');
+const themeApplyBtn = document.getElementById('theme-apply-btn');
+const themeResetBtn = document.getElementById('theme-reset-btn');
+const presetBtns = document.querySelectorAll('.preset-btn');
+
+function openThemeModal() {
+  themeCssEditor.value = loadCustomCSS();
+  themeModalOverlay.classList.remove('hidden');
+  themeCssEditor.focus();
+}
+
+function closeThemeModal() {
+  themeModalOverlay.classList.add('hidden');
+}
+
+function applyThemeCSS() {
+  const css = themeCssEditor.value;
+  saveCustomCSS(css);
+  applyCustomCSS(css);
+  closeThemeModal();
+  showToast('Preview theme applied');
+}
+
+function resetThemeCSS() {
+  themeCssEditor.value = '';
+  saveCustomCSS('');
+  applyCustomCSS('');
+  closeThemeModal();
+  showToast('Preview theme reset');
+}
+
+// Apply saved CSS on load
+applyCustomCSS(loadCustomCSS());
+
+// Event listeners
+document.getElementById('btn-custom-theme').addEventListener('click', openThemeModal);
+themeModalClose.addEventListener('click', closeThemeModal);
+themeApplyBtn.addEventListener('click', applyThemeCSS);
+themeResetBtn.addEventListener('click', resetThemeCSS);
+
+themeModalOverlay.addEventListener('click', (e) => {
+  if (e.target === themeModalOverlay) closeThemeModal();
+});
+
+presetBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const presetName = btn.getAttribute('data-preset');
+    if (PRESET_THEMES[presetName]) {
+      themeCssEditor.value = PRESET_THEMES[presetName];
+    }
+  });
+});

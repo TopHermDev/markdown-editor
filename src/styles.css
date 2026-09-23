@@ -470,3 +470,23 @@ body {
   font-size: 14px !important;
   padding: 2px 6px !important;
 }
+
+/* ── Custom Theme Modal ── */
+#theme-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:1000; display:flex; align-items:center; justify-content:center; }
+#theme-modal { background:var(--bg-secondary); border:1px solid var(--border-main); border-radius:10px; width:560px; max-width:90vw; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.4); }
+#theme-modal-header { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border-main); }
+#theme-modal-header h3 { margin:0; font-size:15px; color:var(--text-primary); }
+#theme-modal-close { background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer; padding:0 4px; line-height:1; }
+#theme-modal-close:hover { color:var(--text-strong); }
+#theme-modal-body { padding:14px 18px; display:flex; flex-direction:column; gap:10px; flex:1; overflow:hidden; }
+#theme-presets { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.theme-presets-label { font-size:12px; color:var(--text-muted); margin-right:2px; }
+.preset-btn { background:var(--bg-button); color:var(--text-secondary); border:1px solid var(--border-button); padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; transition:all 0.15s; }
+.preset-btn:hover { background:var(--bg-button-hover); color:var(--text-strong); border-color:var(--border-button-hover); }
+#theme-css-editor { flex:1; min-height:200px; background:var(--bg-editor); color:var(--text-primary); border:1px solid var(--border-button); border-radius:6px; padding:12px; font-family:monospace; font-size:12px; line-height:1.5; resize:vertical; outline:none; }
+#theme-css-editor:focus { border-color:var(--accent); }
+#theme-modal-footer { display:flex; justify-content:flex-end; gap:8px; padding:12px 18px; border-top:1px solid var(--border-main); }
+#theme-reset-btn { background:var(--bg-button); color:var(--text-muted); border:1px solid var(--border-button); padding:6px 16px; border-radius:5px; cursor:pointer; font-size:13px; transition:all 0.15s; }
+#theme-reset-btn:hover { color:#ff6b6b; border-color:#ff6b6b; }
+#theme-apply-btn { background:var(--accent); color:#000; border:none; padding:6px 20px; border-radius:5px; cursor:pointer; font-size:13px; font-weight:600; transition:all 0.15s; }
+#theme-apply-btn:hover { opacity:0.85; }
