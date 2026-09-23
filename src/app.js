@@ -36,6 +36,7 @@ const cursorPos = document.getElementById('cursor-pos');
 const fileInput = document.getElementById('file-input');
 const themeIcon = document.getElementById('theme-icon');
 const autosaveCheckbox = document.getElementById('autosave-checkbox');
+const wordCountDisplay = document.getElementById('word-count');
 
 // Configure marked for GFM
 marked.setOptions({
@@ -496,6 +497,7 @@ function parseInlineMarkdown(text) {
 // ── Cursor Position Tracking ──
 editor.addEventListener('input', () => {
   updateCursorPos();
+  updateWordCount();
 });
 
 editor.addEventListener('click', () => {
@@ -515,6 +517,14 @@ function updateCursorPos() {
   cursorPos.textContent = `Ln ${line}, Col ${col}`;
 }
 
+// ─ Word & Character Count ─
+function updateWordCount() {
+  const text = editor.value;
+  const chars = text.length;
+  const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+  wordCountDisplay.textContent = `${words} words, ${chars} chars`;
+}
+
 // ── Tab key support ──
 editor.addEventListener('keydown', (e) => {
   if (e.key === 'Tab') {
@@ -530,6 +540,7 @@ editor.addEventListener('keydown', (e) => {
 // ── Init ──
 initTheme();
 updateMode();
+updateWordCount();
 statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+O to open';
 
 // Check for saved session on load
