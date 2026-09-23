@@ -16,6 +16,7 @@ function showToast(message, type = 'success') {
 
 let currentFilePath = null;
 let isPreviewMode = false;
+let isSplitMode = false;
 let isDarkMode = true;
 
 // ── Autosave State ──
@@ -70,23 +71,47 @@ function initTheme() {
 
 // ── Mode Toggle ──
 function toggleMode() {
+  if (isSplitMode) {
+    // In split view, E/Escape is a no-op
+    return;
+  }
   isPreviewMode = !isPreviewMode;
   updateMode();
 }
 
+function toggleSplitView() {
+  isSplitMode = !isSplitMode;
+  if (isSplitMode) {
+    // Entering split view — show both panes
+    isPreviewMode = false;
+    editorPane.classList.remove('hidden');
+    previewPane.classList.remove('hidden');
+    preview.innerHTML = marked.parse(editor.value);
+    modeIndicator.textContent = 'SPLIT';
+    modeIndicator.className = 'split';
+    editor.focus();
+  } else {
+    // Leaving split view — go back to edit mode
+    isPreviewMode = false;
+    updateMode();
+  }
+}
+
 function updateMode() {
+  if (isSplitMode) return; // split view is managed separately
+
   if (isPreviewMode) {
     editorPane.classList.add('hidden');
     previewPane.classList.remove('hidden');
     preview.innerHTML = marked.parse(editor.value);
     modeIndicator.textContent = 'PREVIEW';
-    modeIndicator.classList.add('preview');
+    modeIndicator.className = 'preview';
   } else {
     previewPane.classList.add('hidden');
     editorPane.classList.remove('hidden');
     editor.focus();
     modeIndicator.textContent = 'EDIT';
-    modeIndicator.classList.remove('preview');
+    modeIndicator.className = '';
   }
 }
 
@@ -94,6 +119,7 @@ function updateMode() {
 document.getElementById('btn-open').addEventListener('click', openFile);
 document.getElementById('btn-save').addEventListener('click', saveFile);
 document.getElementById('btn-preview').addEventListener('click', toggleMode);
+document.getElementById('btn-split').addEventListener('click', toggleSplitView);
 document.getElementById('btn-theme').addEventListener('click', toggleTheme);
 document.getElementById('btn-export-pdf').addEventListener('click', exportPDF);
 document.getElementById('btn-export-word').addEventListener('click', exportWord);
@@ -113,7 +139,9 @@ document.addEventListener('keydown', (e) => {
 
   if (key === 'escape') {
     e.preventDefault();
-    if (!isPreviewMode) {
+    if (isSplitMode) {
+      toggleSplitView();
+    } else if (!isPreviewMode) {
       isPreviewMode = true;
       updateMode();
     }
@@ -129,6 +157,13 @@ document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && key === 's') {
     e.preventDefault();
     saveFile();
+    return;
+  }
+
+  // Ctrl+Enter: Toggle split view
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    toggleSplitView();
     return;
   }
 
@@ -299,8 +334,17 @@ autosaveCheckbox.addEventListener('change', () => {
 });
 
 // ── Trigger autosave on editor input ──
+let splitUpdatePending = false;
 editor.addEventListener('input', () => {
   scheduleAutosave();
+  // Live update preview in split mode
+  if (isSplitMode && !splitUpdatePending) {
+    splitUpdatePending = true;
+    requestAnimationFrame(() => {
+      preview.innerHTML = marked.parse(editor.value);
+      splitUpdatePending = false;
+    });
+  }
 });
 
 // ── Export: PDF ──
@@ -734,7 +778,7 @@ editor.addEventListener('keydown', (e) => {
 // ── Init ──
 initTheme();
 updateMode();
-statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+O to open';
+statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+Enter for split';
 
 // Check for saved session on load
 promptRestoreSession();
