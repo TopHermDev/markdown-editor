@@ -123,6 +123,7 @@ document.getElementById('btn-split').addEventListener('click', toggleSplitView);
 document.getElementById('btn-theme').addEventListener('click', toggleTheme);
 document.getElementById('btn-export-pdf').addEventListener('click', exportPDF);
 document.getElementById('btn-export-word').addEventListener('click', exportWord);
+document.getElementById('btn-export-html').addEventListener('click', exportHTML);
 
 // ── Keyboard Shortcuts ──
 document.addEventListener('keydown', (e) => {
@@ -545,6 +546,111 @@ async function exportWord() {
 }
 
 // ── Inline Markdown Parser for Word ──
+// ── Export: HTML ──
+function exportHTML() {
+  const md = editor.value.trim();
+  if (!md) {
+    statusText.textContent = 'Nothing to export — editor is empty';
+    return;
+  }
+
+  statusText.textContent = 'Generating HTML...';
+
+  try {
+    const rendered = marked.parse(md);
+    const filename = (currentFilePath || 'untitled').replace(/\.(md|markdown|txt|rst)$/i, '');
+
+    const htmlDoc = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${filename}</title>
+  <style>
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-editor: #0f0f23;
+      --bg-code: #1a1a3e;
+      --bg-pre: #0a0a1e;
+      --bg-th: #16213e;
+      --bg-blockquote: #0d1b3e;
+      --border-main: #2a2a5a;
+      --border-hr: #2a2a5a;
+      --border-table: #333;
+      --border-pre: #2a2a5a;
+      --text-primary: #e0e0f0;
+      --text-markdown: #d0d0e0;
+      --text-strong: #fff;
+      --text-em: #ccc;
+      --text-h1: #fff;
+      --text-h2: #f0f0ff;
+      --text-h3: #e0e0ff;
+      --text-h4: #d0d0ff;
+      --text-link: #00d2ff;
+      --text-code: #ff8c00;
+      --text-pre: #d0d0e0;
+      --text-blockquote: #aaa;
+      --accent: #00d2ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 40px 20px;
+      line-height: 1.7;
+    }
+
+    .markdown-body {
+      max-width: 800px;
+      margin: 0 auto;
+      font-size: 15px;
+      color: var(--text-markdown);
+    }
+
+    h1 { font-size: 2em; border-bottom: 1px solid var(--border-hr); padding-bottom: 8px; margin: 24px 0 16px; color: var(--text-h1); }
+    h2 { font-size: 1.5em; border-bottom: 1px solid var(--border-main); padding-bottom: 6px; margin: 20px 0 12px; color: var(--text-h2); }
+    h3 { font-size: 1.25em; margin: 16px 0 8px; color: var(--text-h3); }
+    h4 { font-size: 1em; margin: 12px 0 6px; color: var(--text-h4); }
+    p { margin: 12px 0; }
+    a { color: var(--text-link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text-strong); }
+    em { color: var(--text-em); font-style: italic; }
+    code { background: var(--bg-code); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; color: var(--text-code); }
+    pre { background: var(--bg-pre); border: 1px solid var(--border-pre); border-radius: 6px; padding: 16px; overflow-x: auto; margin: 16px 0; }
+    pre code { background: none; padding: 0; color: var(--text-pre); font-size: 13px; }
+    blockquote { border-left: 3px solid var(--accent); padding: 8px 16px; margin: 12px 0; background: var(--bg-blockquote); color: var(--text-blockquote); }
+    ul, ol { margin: 12px 0; padding-left: 24px; }
+    li { margin: 4px 0; }
+    hr { border: none; border-top: 1px solid var(--border-hr); margin: 24px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    th, td { border: 1px solid var(--border-table); padding: 8px 12px; text-align: left; }
+    th { background: var(--bg-th); color: var(--text-strong); font-weight: 600; }
+    img { max-width: 100%; border-radius: 6px; }
+    input[type="checkbox"] { margin-right: 6px; }
+  </style>
+</head>
+<body>
+  <div class="markdown-body">
+${rendered}
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+    saveAs(blob, `${filename}.html`);
+    statusText.textContent = `Exported: ${filename}.html`;
+    showToast(`Exported ${filename}.html`, 'success');
+  } catch (err) {
+    statusText.textContent = `HTML export failed: ${err.message}`;
+    showToast(`HTML export failed: ${err.message}`, 'error');
+    console.error('HTML export error:', err);
+  }
+}
+
 function parseInlineMarkdown(text) {
   // Simple inline parser: bold, italic, code, links
   // Returns an array of TextRun objects for docx
