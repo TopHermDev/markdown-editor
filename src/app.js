@@ -37,6 +37,7 @@ const cursorPos = document.getElementById('cursor-pos');
 const fileInput = document.getElementById('file-input');
 const themeIcon = document.getElementById('theme-icon');
 const autosaveCheckbox = document.getElementById('autosave-checkbox');
+const wordCountDisplay = document.getElementById('word-count');
 
 // Configure marked for GFM with syntax highlighting
 marked.use({
@@ -897,6 +898,7 @@ function parseInlineMarkdown(text) {
 // ── Cursor Position Tracking ──
 editor.addEventListener('input', () => {
   updateCursorPos();
+  updateWordCount();
 });
 
 editor.addEventListener('click', () => {
@@ -916,6 +918,15 @@ function updateCursorPos() {
   cursorPos.textContent = `Ln ${line}, Col ${col}`;
 }
 
+// ─ Word & Character Count ─
+function updateWordCount() {
+  const text = editor.value;
+  const chars = text.length;
+  const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+  wordCountDisplay.textContent = `${words} words, ${chars} chars`;
+}
+
+// ── Tab key support ──
 // ── Image Drag & Drop / Paste ──
 function insertImageAtCursor(dataUri, fileName) {
   const start = editor.selectionStart;
@@ -1141,6 +1152,7 @@ findReplaceToggle.addEventListener('click', () => {
 // ── Keyboard Shortcuts ── (extended for find/replace)
 // Override the existing keydown listener to add Ctrl+F / Ctrl+H
 document.removeEventListener('keydown', null); // no-op; we extend below
+
 editor.addEventListener('keydown', (e) => {
   if (e.key === 'Tab') {
     e.preventDefault();
@@ -1155,7 +1167,10 @@ editor.addEventListener('keydown', (e) => {
 // ── Init ──
 initTheme();
 updateMode();
+updateWordCount();
+statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+O to open';
 statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+Enter for split';
+
 
 // Check for saved session on load
 promptRestoreSession();
