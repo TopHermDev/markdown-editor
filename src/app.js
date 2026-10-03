@@ -479,7 +479,7 @@ async function exportPDF() {
   // Render markdown to HTML in a temporary container
   const container = document.createElement('div');
   container.innerHTML = marked.parse(md);
-  container.style.cssText = 'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.6; color: #1a1a1a; padding: 20px; max-width: 800px;';
+  container.style.cssText = 'font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.6; color: #1a1a1a; padding: 20px; max-width: 800px;';
 
   // Style elements inside the container
   container.querySelectorAll('h1').forEach(el => el.style.cssText = 'font-size: 24px; font-weight: 700; margin: 24px 0 12px; border-bottom: 1px solid #ddd; padding-bottom: 8px;');
@@ -684,34 +684,34 @@ function exportHTML() {
   <title>${filename}</title>
   <style>
     :root {
-      --bg-primary: #1a1a2e;
-      --bg-secondary: #16213e;
-      --bg-editor: #0f0f23;
-      --bg-code: #1a1a3e;
-      --bg-pre: #0a0a1e;
-      --bg-th: #16213e;
-      --bg-blockquote: #0d1b3e;
-      --border-main: #2a2a5a;
-      --border-hr: #2a2a5a;
-      --border-table: #333;
-      --border-pre: #2a2a5a;
-      --text-primary: #e0e0f0;
-      --text-markdown: #d0d0e0;
+      --bg-primary: #172554;
+      --bg-secondary: #1E40AF;
+      --bg-editor: #101A3F;
+      --bg-code: #1E3A8A;
+      --bg-pre: #101A3F;
+      --bg-th: #1E40AF;
+      --bg-blockquote: #1E3A8A;
+      --border-main: #4C63D8;
+      --border-hr: #4C63D8;
+      --border-table: #4C63D8;
+      --border-pre: #4C63D8;
+      --text-primary: #E7EDFF;
+      --text-markdown: #D6DDF5;
       --text-strong: #fff;
-      --text-em: #ccc;
+      --text-em: #D6DFF7;
       --text-h1: #fff;
-      --text-h2: #f0f0ff;
-      --text-h3: #e0e0ff;
-      --text-h4: #d0d0ff;
-      --text-link: #00d2ff;
+      --text-h2: #F0F5FF;
+      --text-h3: #E4ECFF;
+      --text-h4: #D6E2FF;
+      --text-link: #60A5FA;
       --text-code: #ff8c00;
-      --text-pre: #d0d0e0;
-      --text-blockquote: #aaa;
-      --accent: #00d2ff;
+      --text-pre: #D8E1F5;
+      --text-blockquote: #B9C6E8;
+      --accent: #22D3EE;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
       margin: 0;
@@ -790,34 +790,34 @@ function exportHTML() {
   <title>${filename}</title>
   <style>
     :root {
-      --bg-primary: #1a1a2e;
-      --bg-secondary: #16213e;
-      --bg-editor: #0f0f23;
-      --bg-code: #1a1a3e;
-      --bg-pre: #0a0a1e;
-      --bg-th: #16213e;
-      --bg-blockquote: #0d1b3e;
-      --border-main: #2a2a5a;
-      --border-hr: #2a2a5a;
-      --border-table: #333;
-      --border-pre: #2a2a5a;
-      --text-primary: #e0e0f0;
-      --text-markdown: #d0d0e0;
+      --bg-primary: #172554;
+      --bg-secondary: #1E40AF;
+      --bg-editor: #101A3F;
+      --bg-code: #1E3A8A;
+      --bg-pre: #101A3F;
+      --bg-th: #1E40AF;
+      --bg-blockquote: #1E3A8A;
+      --border-main: #4C63D8;
+      --border-hr: #4C63D8;
+      --border-table: #4C63D8;
+      --border-pre: #4C63D8;
+      --text-primary: #E7EDFF;
+      --text-markdown: #D6DDF5;
       --text-strong: #fff;
-      --text-em: #ccc;
+      --text-em: #D6DFF7;
       --text-h1: #fff;
-      --text-h2: #f0f0ff;
-      --text-h3: #e0e0ff;
-      --text-h4: #d0d0ff;
-      --text-link: #00d2ff;
+      --text-h2: #F0F5FF;
+      --text-h3: #E4ECFF;
+      --text-h4: #D6E2FF;
+      --text-link: #60A5FA;
       --text-code: #ff8c00;
-      --text-pre: #d0d0e0;
-      --text-blockquote: #aaa;
-      --accent: #00d2ff;
+      --text-pre: #D8E1F5;
+      --text-blockquote: #B9C6E8;
+      --accent: #22D3EE;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
       margin: 0;
@@ -896,34 +896,34 @@ function exportHTML() {
   <title>${filename}</title>
   <style>
     :root {
-      --bg-primary: #1a1a2e;
-      --bg-secondary: #16213e;
-      --bg-editor: #0f0f23;
-      --bg-code: #1a1a3e;
-      --bg-pre: #0a0a1e;
-      --bg-th: #16213e;
-      --bg-blockquote: #0d1b3e;
-      --border-main: #2a2a5a;
-      --border-hr: #2a2a5a;
-      --border-table: #333;
-      --border-pre: #2a2a5a;
-      --text-primary: #e0e0f0;
-      --text-markdown: #d0d0e0;
+      --bg-primary: #172554;
+      --bg-secondary: #1E40AF;
+      --bg-editor: #101A3F;
+      --bg-code: #1E3A8A;
+      --bg-pre: #101A3F;
+      --bg-th: #1E40AF;
+      --bg-blockquote: #1E3A8A;
+      --border-main: #4C63D8;
+      --border-hr: #4C63D8;
+      --border-table: #4C63D8;
+      --border-pre: #4C63D8;
+      --text-primary: #E7EDFF;
+      --text-markdown: #D6DDF5;
       --text-strong: #fff;
-      --text-em: #ccc;
+      --text-em: #D6DFF7;
       --text-h1: #fff;
-      --text-h2: #f0f0ff;
-      --text-h3: #e0e0ff;
-      --text-h4: #d0d0ff;
-      --text-link: #00d2ff;
+      --text-h2: #F0F5FF;
+      --text-h3: #E4ECFF;
+      --text-h4: #D6E2FF;
+      --text-link: #60A5FA;
       --text-code: #ff8c00;
-      --text-pre: #d0d0e0;
-      --text-blockquote: #aaa;
-      --accent: #00d2ff;
+      --text-pre: #D8E1F5;
+      --text-blockquote: #B9C6E8;
+      --accent: #22D3EE;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
       margin: 0;
