@@ -87,6 +87,8 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            artifacts/release-linux/*
-            artifacts/release-windows/*
-            artifacts/release-macos/*
+            artifacts/**/*.deb
+            artifacts/**/*.AppImage
+            artifacts/**/*.msi
+            artifacts/**/*.exe
+            artifacts/**/*.dmg
