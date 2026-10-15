@@ -218,7 +218,56 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ── File Operations ──
+// Set editor content reliably. execCommand('insertText') preserves the undo
+// stack (Ctrl+Z works), but webkit2gtk silently no-ops it when the editor
+// didn't take focus, which left the window blank with no error. Verify the
+// insert landed and fall back to direct assignment.
+function setEditorContent(text) {
+  editor.focus();
+  editor.select();
+  document.execCommand('insertText', false, text);
+  if (editor.value !== text) {
+    editor.value = text;
+  }
+}
+
+// Load a file from an absolute path via the Tauri backend.
+async function loadFileFromPath(filePath) {
+  const content = await window.__TAURI__.core.invoke('read_file', { path: filePath });
+  currentFilePath = filePath;
+  activeFilePath = filePath;
+  filenameDisplay.textContent = filePath.split('/').pop();
+  setEditorContent(content);
+  statusText.textContent = `Opened: ${filePath}`;
+  updateMode();
+  scheduleAutosave();
+  addToRecentFiles(filePath.split('/').pop());
+}
+
 function openFile() {
+  // In the Tauri runtime, use the native dialog so we get a REAL absolute
+  // path — that lets Save write back to the original file (see saveFile).
+  // The HTML file input only exposes the basename, so Save had to fall back
+  // to a browser-style download.
+  if (window.__TAURI__ && window.__TAURI__.dialog) {
+    window.__TAURI__.dialog.open({
+      multiple: false,
+      title: 'Open markdown file',
+      filters: [{ name: 'Markdown', extensions: ['md', 'markdown', 'txt', 'rst'] }]
+    }).then(async (selected) => {
+      if (!selected) return;
+      const path = typeof selected === 'string' ? selected : selected[0];
+      if (!path) return;
+      try {
+        await loadFileFromPath(path);
+      } catch (err) {
+        statusText.textContent = `Failed to open: ${err}`;
+        showToast('Failed to open file: ' + err, 'error');
+      }
+    }).catch(() => { /* user cancelled */ });
+    return;
+  }
+  // Browser fallback (no Tauri runtime): hidden file input.
   fileInput.click();
 }
 
@@ -230,9 +279,7 @@ fileInput.addEventListener('change', async (e) => {
   reader.onload = (ev) => {
     currentFilePath = file.name;
     filenameDisplay.textContent = file.name;
-    editor.focus();
-    editor.select();
-    document.execCommand('insertText', false, ev.target.result);
+    setEditorContent(ev.target.result);
     statusText.textContent = `Opened: ${file.name}`;
     updateMode();
     scheduleAutosave();
@@ -242,7 +289,21 @@ fileInput.addEventListener('change', async (e) => {
   fileInput.value = '';
 });
 
-function saveFile() {
+async function saveFile() {
+  // When we have a real absolute path and the Tauri backend, write back to
+  // the original file instead of triggering a browser-style download.
+  if (window.__TAURI__ && window.__TAURI__.core && currentFilePath && currentFilePath.startsWith('/')) {
+    try {
+      await window.__TAURI__.core.invoke('write_file', { path: currentFilePath, content: editor.value });
+      statusText.textContent = `Saved: ${currentFilePath}`;
+      showToast(`Saved ${currentFilePath.split('/').pop()}`, 'success');
+    } catch (err) {
+      statusText.textContent = `Save failed: ${err}`;
+      showToast(`Save failed: ${err}`, 'error');
+    }
+    return;
+  }
+
   const blob = new Blob([editor.value], { type: 'text/markdown' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -411,11 +472,9 @@ function restoreSession(session) {
   }
 
   // Build the undo stack with execCommand so Ctrl+Z works from restored state.
-  // Focus the editor, select all existing content (empty on fresh load),
-  // and insert the restored content as a single undo entry.
-  editor.focus();
-  editor.select();
-  document.execCommand('insertText', false, session.content);
+  // setEditorContent falls back to direct assignment if the editor didn't take
+  // focus (webkit2gtk can silently no-op execCommand).
+  setEditorContent(session.content);
 
   if (typeof session.cursorPosition === 'number') {
     editor.setSelectionRange(session.cursorPosition, session.cursorPosition);
@@ -1277,32 +1336,31 @@ statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+O to open';
 statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+Enter for split';
 
 
-// Check for saved session on load
-promptRestoreSession();
-
-// ── Handle file opened via OS file association (Linux "Open with") ──
-async function listenForOpenFile() {
-  if (window.__TAURI__ && window.__TAURI__.event) {
-    await window.__TAURI__.event.listen('open-file', (event) => {
-      const filePath = event.payload;
-      if (filePath) {
-        window.__TAURI__.core.invoke('read_file', { path: filePath }).then((content) => {
-          currentFilePath = filePath;
-          filenameDisplay.textContent = filePath.split('/').pop();
-          editor.focus();
-          editor.select();
-          document.execCommand('insertText', false, content);
-          statusText.textContent = `Opened: ${filePath}`;
-          updateMode();
-          addToRecentFiles(filePath.split('/').pop());
-        }).catch((err) => {
-          statusText.textContent = `Failed to open: ${err}`;
-        });
-      }
-    });
+// ── File opened via OS file association (Linux "Open with") / CLI arg ──
+// The Rust side stores the CLI path in managed state; PULL it now that our
+// listeners are registered. The old code listened for an 'open-file' event
+// that Rust emitted during setup(), i.e. BEFORE this script ran, so the
+// event was dropped and the window came up empty.
+async function consumePendingOpenFile() {
+  if (!window.__TAURI__ || !window.__TAURI__.core) {
+    // Browser mode: no CLI file argument possible — restore session as before.
+    promptRestoreSession();
+    return;
+  }
+  try {
+    const filePath = await window.__TAURI__.core.invoke('take_pending_open_file');
+    if (filePath) {
+      await loadFileFromPath(filePath);
+    } else {
+      // No file argument: offer to restore the previous autosave session.
+      promptRestoreSession();
+    }
+  } catch (err) {
+    console.error('Failed to open file from CLI:', err);
+    promptRestoreSession();
   }
 }
-listenForOpenFile();
+consumePendingOpenFile();
 
 // ── File Tree Sidebar ──
 const sidebar = document.getElementById('sidebar');
@@ -1456,16 +1514,7 @@ async function openFileFromTree(filePath) {
   }
 
   try {
-    const content = await window.__TAURI__.core.invoke('read_file', { path: filePath });
-    currentFilePath = filePath;
-    activeFilePath = filePath;
-    filenameDisplay.textContent = filePath.split('/').pop();
-    editor.focus();
-    editor.select();
-    document.execCommand('insertText', false, content);
-    statusText.textContent = 'Opened: ' + filePath;
-    updateMode();
-    scheduleAutosave();
+    await loadFileFromPath(filePath);
 
     // Highlight the active file in the tree
     document.querySelectorAll('.tree-item.active').forEach(el => el.classList.remove('active'));
