@@ -218,7 +218,56 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ── File Operations ──
+// Set editor content reliably. execCommand('insertText') preserves the undo
+// stack (Ctrl+Z works), but webkit2gtk silently no-ops it when the editor
+// didn't take focus, which left the window blank with no error. Verify the
+// insert landed and fall back to direct assignment.
+function setEditorContent(text) {
+  editor.focus();
+  editor.select();
+  document.execCommand('insertText', false, text);
+  if (editor.value !== text) {
+    editor.value = text;
+  }
+}
+
+// Load a file from an absolute path via the Tauri backend.
+async function loadFileFromPath(filePath) {
+  const content = await window.__TAURI__.core.invoke('read_file', { path: filePath });
+  currentFilePath = filePath;
+  activeFilePath = filePath;
+  filenameDisplay.textContent = filePath.split('/').pop();
+  setEditorContent(content);
+  statusText.textContent = `Opened: ${filePath}`;
+  updateMode();
+  scheduleAutosave();
+  addToRecentFiles(filePath.split('/').pop());
+}
+
 function openFile() {
+  // In the Tauri runtime, use the native dialog so we get a REAL absolute
+  // path — that lets Save write back to the original file (see saveFile).
+  // The HTML file input only exposes the basename, so Save had to fall back
+  // to a browser-style download.
+  if (window.__TAURI__ && window.__TAURI__.dialog) {
+    window.__TAURI__.dialog.open({
+      multiple: false,
+      title: 'Open markdown file',
+      filters: [{ name: 'Markdown', extensions: ['md', 'markdown', 'txt', 'rst'] }]
+    }).then(async (selected) => {
+      if (!selected) return;
+      const path = typeof selected === 'string' ? selected : selected[0];
+      if (!path) return;
+      try {
+        await loadFileFromPath(path);
+      } catch (err) {
+        statusText.textContent = `Failed to open: ${err}`;
+        showToast('Failed to open file: ' + err, 'error');
+      }
+    }).catch(() => { /* user cancelled */ });
+    return;
+  }
+  // Browser fallback (no Tauri runtime): hidden file input.
   fileInput.click();
 }
 
@@ -230,9 +279,7 @@ fileInput.addEventListener('change', async (e) => {
   reader.onload = (ev) => {
     currentFilePath = file.name;
     filenameDisplay.textContent = file.name;
-    editor.focus();
-    editor.select();
-    document.execCommand('insertText', false, ev.target.result);
+    setEditorContent(ev.target.result);
     statusText.textContent = `Opened: ${file.name}`;
     updateMode();
     scheduleAutosave();
@@ -242,7 +289,21 @@ fileInput.addEventListener('change', async (e) => {
   fileInput.value = '';
 });
 
-function saveFile() {
+async function saveFile() {
+  // When we have a real absolute path and the Tauri backend, write back to
+  // the original file instead of triggering a browser-style download.
+  if (window.__TAURI__ && window.__TAURI__.core && currentFilePath && currentFilePath.startsWith('/')) {
+    try {
+      await window.__TAURI__.core.invoke('write_file', { path: currentFilePath, content: editor.value });
+      statusText.textContent = `Saved: ${currentFilePath}`;
+      showToast(`Saved ${currentFilePath.split('/').pop()}`, 'success');
+    } catch (err) {
+      statusText.textContent = `Save failed: ${err}`;
+      showToast(`Save failed: ${err}`, 'error');
+    }
+    return;
+  }
+
   const blob = new Blob([editor.value], { type: 'text/markdown' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -411,11 +472,9 @@ function restoreSession(session) {
   }
 
   // Build the undo stack with execCommand so Ctrl+Z works from restored state.
-  // Focus the editor, select all existing content (empty on fresh load),
-  // and insert the restored content as a single undo entry.
-  editor.focus();
-  editor.select();
-  document.execCommand('insertText', false, session.content);
+  // setEditorContent falls back to direct assignment if the editor didn't take
+  // focus (webkit2gtk can silently no-op execCommand).
+  setEditorContent(session.content);
 
   if (typeof session.cursorPosition === 'number') {
     editor.setSelectionRange(session.cursorPosition, session.cursorPosition);
@@ -479,7 +538,7 @@ async function exportPDF() {
   // Render markdown to HTML in a temporary container
   const container = document.createElement('div');
   container.innerHTML = marked.parse(md);
-  container.style.cssText = 'font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.6; color: #1a1a1a; padding: 20px; max-width: 800px;';
+  container.style.cssText = 'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.6; color: #1a1a1a; padding: 20px; max-width: 800px;';
 
   // Style elements inside the container
   container.querySelectorAll('h1').forEach(el => el.style.cssText = 'font-size: 24px; font-weight: 700; margin: 24px 0 12px; border-bottom: 1px solid #ddd; padding-bottom: 8px;');
@@ -684,34 +743,34 @@ function exportHTML() {
   <title>${filename}</title>
   <style>
     :root {
-      --bg-primary: #172554;
-      --bg-secondary: #1E40AF;
-      --bg-editor: #101A3F;
-      --bg-code: #1E3A8A;
-      --bg-pre: #101A3F;
-      --bg-th: #1E40AF;
-      --bg-blockquote: #1E3A8A;
-      --border-main: #4C63D8;
-      --border-hr: #4C63D8;
-      --border-table: #4C63D8;
-      --border-pre: #4C63D8;
-      --text-primary: #E7EDFF;
-      --text-markdown: #D6DDF5;
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-editor: #0f0f23;
+      --bg-code: #1a1a3e;
+      --bg-pre: #0a0a1e;
+      --bg-th: #16213e;
+      --bg-blockquote: #0d1b3e;
+      --border-main: #2a2a5a;
+      --border-hr: #2a2a5a;
+      --border-table: #333;
+      --border-pre: #2a2a5a;
+      --text-primary: #e0e0f0;
+      --text-markdown: #d0d0e0;
       --text-strong: #fff;
-      --text-em: #D6DFF7;
+      --text-em: #ccc;
       --text-h1: #fff;
-      --text-h2: #F0F5FF;
-      --text-h3: #E4ECFF;
-      --text-h4: #D6E2FF;
-      --text-link: #60A5FA;
+      --text-h2: #f0f0ff;
+      --text-h3: #e0e0ff;
+      --text-h4: #d0d0ff;
+      --text-link: #00d2ff;
       --text-code: #ff8c00;
-      --text-pre: #D8E1F5;
-      --text-blockquote: #B9C6E8;
-      --accent: #22D3EE;
+      --text-pre: #d0d0e0;
+      --text-blockquote: #aaa;
+      --accent: #00d2ff;
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
       margin: 0;
@@ -790,34 +849,34 @@ function exportHTML() {
   <title>${filename}</title>
   <style>
     :root {
-      --bg-primary: #172554;
-      --bg-secondary: #1E40AF;
-      --bg-editor: #101A3F;
-      --bg-code: #1E3A8A;
-      --bg-pre: #101A3F;
-      --bg-th: #1E40AF;
-      --bg-blockquote: #1E3A8A;
-      --border-main: #4C63D8;
-      --border-hr: #4C63D8;
-      --border-table: #4C63D8;
-      --border-pre: #4C63D8;
-      --text-primary: #E7EDFF;
-      --text-markdown: #D6DDF5;
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-editor: #0f0f23;
+      --bg-code: #1a1a3e;
+      --bg-pre: #0a0a1e;
+      --bg-th: #16213e;
+      --bg-blockquote: #0d1b3e;
+      --border-main: #2a2a5a;
+      --border-hr: #2a2a5a;
+      --border-table: #333;
+      --border-pre: #2a2a5a;
+      --text-primary: #e0e0f0;
+      --text-markdown: #d0d0e0;
       --text-strong: #fff;
-      --text-em: #D6DFF7;
+      --text-em: #ccc;
       --text-h1: #fff;
-      --text-h2: #F0F5FF;
-      --text-h3: #E4ECFF;
-      --text-h4: #D6E2FF;
-      --text-link: #60A5FA;
+      --text-h2: #f0f0ff;
+      --text-h3: #e0e0ff;
+      --text-h4: #d0d0ff;
+      --text-link: #00d2ff;
       --text-code: #ff8c00;
-      --text-pre: #D8E1F5;
-      --text-blockquote: #B9C6E8;
-      --accent: #22D3EE;
+      --text-pre: #d0d0e0;
+      --text-blockquote: #aaa;
+      --accent: #00d2ff;
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
       margin: 0;
@@ -896,34 +955,34 @@ function exportHTML() {
   <title>${filename}</title>
   <style>
     :root {
-      --bg-primary: #172554;
-      --bg-secondary: #1E40AF;
-      --bg-editor: #101A3F;
-      --bg-code: #1E3A8A;
-      --bg-pre: #101A3F;
-      --bg-th: #1E40AF;
-      --bg-blockquote: #1E3A8A;
-      --border-main: #4C63D8;
-      --border-hr: #4C63D8;
-      --border-table: #4C63D8;
-      --border-pre: #4C63D8;
-      --text-primary: #E7EDFF;
-      --text-markdown: #D6DDF5;
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-editor: #0f0f23;
+      --bg-code: #1a1a3e;
+      --bg-pre: #0a0a1e;
+      --bg-th: #16213e;
+      --bg-blockquote: #0d1b3e;
+      --border-main: #2a2a5a;
+      --border-hr: #2a2a5a;
+      --border-table: #333;
+      --border-pre: #2a2a5a;
+      --text-primary: #e0e0f0;
+      --text-markdown: #d0d0e0;
       --text-strong: #fff;
-      --text-em: #D6DFF7;
+      --text-em: #ccc;
       --text-h1: #fff;
-      --text-h2: #F0F5FF;
-      --text-h3: #E4ECFF;
-      --text-h4: #D6E2FF;
-      --text-link: #60A5FA;
+      --text-h2: #f0f0ff;
+      --text-h3: #e0e0ff;
+      --text-h4: #d0d0ff;
+      --text-link: #00d2ff;
       --text-code: #ff8c00;
-      --text-pre: #D8E1F5;
-      --text-blockquote: #B9C6E8;
-      --accent: #22D3EE;
+      --text-pre: #d0d0e0;
+      --text-blockquote: #aaa;
+      --accent: #00d2ff;
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
       margin: 0;
@@ -1277,32 +1336,31 @@ statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+O to open';
 statusText.textContent = 'Ready — E to edit, Esc to preview, Ctrl+Enter for split';
 
 
-// Check for saved session on load
-promptRestoreSession();
-
-// ── Handle file opened via OS file association (Linux "Open with") ──
-async function listenForOpenFile() {
-  if (window.__TAURI__ && window.__TAURI__.event) {
-    await window.__TAURI__.event.listen('open-file', (event) => {
-      const filePath = event.payload;
-      if (filePath) {
-        window.__TAURI__.core.invoke('read_file', { path: filePath }).then((content) => {
-          currentFilePath = filePath;
-          filenameDisplay.textContent = filePath.split('/').pop();
-          editor.focus();
-          editor.select();
-          document.execCommand('insertText', false, content);
-          statusText.textContent = `Opened: ${filePath}`;
-          updateMode();
-          addToRecentFiles(filePath.split('/').pop());
-        }).catch((err) => {
-          statusText.textContent = `Failed to open: ${err}`;
-        });
-      }
-    });
+// ── File opened via OS file association (Linux "Open with") / CLI arg ──
+// The Rust side stores the CLI path in managed state; PULL it now that our
+// listeners are registered. The old code listened for an 'open-file' event
+// that Rust emitted during setup(), i.e. BEFORE this script ran, so the
+// event was dropped and the window came up empty.
+async function consumePendingOpenFile() {
+  if (!window.__TAURI__ || !window.__TAURI__.core) {
+    // Browser mode: no CLI file argument possible — restore session as before.
+    promptRestoreSession();
+    return;
+  }
+  try {
+    const filePath = await window.__TAURI__.core.invoke('take_pending_open_file');
+    if (filePath) {
+      await loadFileFromPath(filePath);
+    } else {
+      // No file argument: offer to restore the previous autosave session.
+      promptRestoreSession();
+    }
+  } catch (err) {
+    console.error('Failed to open file from CLI:', err);
+    promptRestoreSession();
   }
 }
-listenForOpenFile();
+consumePendingOpenFile();
 
 // ── File Tree Sidebar ──
 const sidebar = document.getElementById('sidebar');
@@ -1456,16 +1514,7 @@ async function openFileFromTree(filePath) {
   }
 
   try {
-    const content = await window.__TAURI__.core.invoke('read_file', { path: filePath });
-    currentFilePath = filePath;
-    activeFilePath = filePath;
-    filenameDisplay.textContent = filePath.split('/').pop();
-    editor.focus();
-    editor.select();
-    document.execCommand('insertText', false, content);
-    statusText.textContent = 'Opened: ' + filePath;
-    updateMode();
-    scheduleAutosave();
+    await loadFileFromPath(filePath);
 
     // Highlight the active file in the tree
     document.querySelectorAll('.tree-item.active').forEach(el => el.classList.remove('active'));

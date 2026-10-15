@@ -2,9 +2,8 @@
 
 use std::env;
 use std::fs;
+use std::sync::Mutex;
 use serde::Serialize;
-use tauri::Emitter;
-use tauri::Manager;
 
 #[derive(Serialize)]
 struct DirEntry {
@@ -60,27 +59,39 @@ fn list_directory(path: String) -> Result<Vec<DirEntry>, String> {
     Ok(result)
 }
 
+// File path passed on the command line (OS file association / "Open with").
+// Stored in managed state so the frontend can PULL it once its JS is ready.
+// The old approach PUSHed an 'open-file' event during setup(), which fired
+// before the webview had loaded app.js and registered its listener, so the
+// event was lost and the window came up empty.
+struct PendingOpenFile(Mutex<Option<String>>);
+
+#[tauri::command]
+fn take_pending_open_file(state: tauri::State<PendingOpenFile>) -> Option<String> {
+    state.0.lock().unwrap().take()
+}
+
 fn main() {
+    let pending: Mutex<Option<String>> = Mutex::new(None);
+
+    {
+        let args: Vec<String> = env::args().collect();
+        let file_args: Vec<&str> = args
+            .iter()
+            .skip(1)
+            .filter(|arg| !arg.starts_with('-'))
+            .map(|s| s.as_str())
+            .collect();
+
+        if !file_args.is_empty() {
+            *pending.lock().unwrap() = Some(file_args[0].to_string());
+        }
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![read_file, write_file, list_directory])
-        .setup(|app| {
-            let args: Vec<String> = env::args().collect();
-            let file_args: Vec<&str> = args
-                .iter()
-                .skip(1)
-                .filter(|arg| !arg.starts_with('-'))
-                .map(|s| s.as_str())
-                .collect();
-
-            if !file_args.is_empty() {
-                let file_path = file_args[0].to_string();
-                let window = app.get_webview_window("main").unwrap();
-                window.emit("open-file", file_path).unwrap();
-            }
-
-            Ok(())
-        })
+        .manage(PendingOpenFile(pending))
+        .invoke_handler(tauri::generate_handler![read_file, write_file, list_directory, take_pending_open_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
