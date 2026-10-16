@@ -92,3 +92,4 @@ jobs:
             artifacts/**/*.msi
             artifacts/**/*.exe
             artifacts/**/*.dmg
+            release/install.sh

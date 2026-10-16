@@ -11,6 +11,7 @@
 <p align="center">
   <a href="#features">Features</a> •
   <a href="#install">Install</a> •
+  <a href="#uninstall">Uninstall</a> •
   <a href="#build-from-source">Build</a> •
   <a href="#keyboard-shortcuts">Shortcuts</a> •
   <a href="#license">License</a>
@@ -43,47 +44,42 @@ MarkFlow is a minimal, performant markdown editor that runs natively on Linux, m
 **Debian / Ubuntu (.deb)**
 
 ```bash
-sudo dpkg -i markflow_0.4.3_amd64.deb
+sudo dpkg -i MarkFlow_0.7.0_amd64.deb
 sudo apt-get install -f   # install any missing dependencies
 ```
 
 **AppImage**
 
 ```bash
-chmod +x MarkFlow-0.4.3.AppImage
-./MarkFlow-0.4.3.AppImage
+chmod +x MarkFlow_0.7.0_amd64.AppImage
+./MarkFlow_0.7.0_amd64.AppImage
 ```
 
-**Arch Linux (AUR)**
+**Arch Linux**
+
+There is no AUR package for MarkFlow yet. Use the AppImage above, or build from source (see below).
+
+**install script**
 
 ```bash
-# Clone and build with makepkg
-git clone https://github.com/TopHermDev/markdown-editor.git
-cd markdown-editor
-makepkg -si
+curl -sL https://raw.githubusercontent.com/TopHermDev/markdown-editor/main/release/install.sh | bash
 ```
 
-**install.sh (from source release)**
+The script resolves the latest release automatically and installs the AppImage to `~/.local/bin/markflow` with a desktop entry (no sudo needed). For a system-wide install to `/usr/local/bin`, pass `--system` (requires root):
 
 ```bash
-curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.3/install.sh | bash
-```
-
-Installs to `~/.local/bin` by default (no sudo needed). For a system-wide install to `/usr/local/bin`, pass `--system` (requires root):
-
-```bash
-curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.3/install.sh | bash -s -- --system
+curl -sL https://raw.githubusercontent.com/TopHermDev/markdown-editor/main/release/install.sh | bash -s -- --system
 ```
 
 ### macOS
 
-1. Download `MarkFlow-0.4.3.dmg` from [Releases](https://github.com/TopHermDev/markdown-editor/releases)
+1. Download `MarkFlow_0.7.0_aarch64.dmg` from [Releases](https://github.com/TopHermDev/markdown-editor/releases) (Apple Silicon only)
 2. Open the `.dmg` file
 3. Drag **MarkFlow** to your Applications folder
 
 ### Windows
 
-1. Download `MarkFlow-0.4.3-setup.exe` or `MarkFlow-0.4.3.msi` from [Releases](https://github.com/TopHermDev/markdown-editor/releases)
+1. Download `MarkFlow_0.7.0_x64-setup.exe` or `MarkFlow_0.7.0_x64_en-US.msi` from [Releases](https://github.com/TopHermDev/markdown-editor/releases)
 2. Run the installer and follow the on-screen prompts
 
 ### Updating
@@ -92,13 +88,49 @@ To update an existing installation, re-run the install command. The script detec
 
 ```bash
 # User install
-curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.3/install.sh | bash
+curl -sL https://raw.githubusercontent.com/TopHermDev/markdown-editor/main/release/install.sh | bash
 
 # System-wide install
-curl -sL https://github.com/TopHermDev/markdown-editor/releases/download/v0.4.3/install.sh | bash -s -- --system
+curl -sL https://raw.githubusercontent.com/TopHermDev/markdown-editor/main/release/install.sh | bash -s -- --system
 ```
 
 For `.deb` packages, download and install the new version — `dpkg` will overwrite the existing files.
+
+## Uninstall
+
+**install script (user install)**
+
+```bash
+curl -sL https://raw.githubusercontent.com/TopHermDev/markdown-editor/main/release/install.sh | bash -s -- --uninstall
+```
+
+Or remove the files manually:
+
+```bash
+rm -f ~/.local/bin/markflow ~/.local/bin/markflow.version ~/.local/share/applications/markflow.desktop
+```
+
+**install script (system-wide install)**
+
+```bash
+curl -sL https://raw.githubusercontent.com/TopHermDev/markdown-editor/main/release/install.sh | bash -s -- --uninstall --system
+```
+
+Or manually:
+
+```bash
+sudo rm -f /usr/local/bin/markflow /usr/local/bin/markflow.version /usr/local/share/applications/markflow.desktop
+```
+
+**.deb package**
+
+```bash
+sudo dpkg -r mark-flow
+```
+
+**AppImage**
+
+Delete the `.AppImage` file you downloaded.
 
 ## Build from Source
 
